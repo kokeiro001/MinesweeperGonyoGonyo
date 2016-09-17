@@ -243,3 +243,5 @@ ModelManifest.xml
 
 # FAKE - F# Make
 .fake/
+
+UnityProject/Assets/Plugins/MyDlls/

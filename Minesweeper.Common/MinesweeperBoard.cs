@@ -2,11 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using MoreLinq;
 using System.Diagnostics;
-using System.Reactive;
-using System.Reactive.Subjects;
 
 namespace Minesweeper.Common
 {
@@ -15,13 +12,13 @@ namespace Minesweeper.Common
         public int X;
         public int Y;
 
-        public Point(int y, int x)
+        public Point(int y, int x) 
         {
             Y = y;
             X = x;
         }
     }
-    public enum CellState
+    public enum CellState 
     {
         Close,
         Open,
@@ -39,7 +36,7 @@ namespace Minesweeper.Common
         public MinesweeperCell[] FourLink = new MinesweeperCell[4];
     }
 
-    public class MinesweeperBoard
+    public class MinesweeperBoard 
     {
         public int Width { get; }
         public int Height { get; }
