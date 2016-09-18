@@ -75,13 +75,13 @@ namespace Minesweeper.ConsoleApp
                 switch(inputCommand.Type)
                 {
                     case InputCommandType.Open:
-                        if(!board.OpenCell(Position2BoardIndex(inputCommand.Y, inputCommand.X)))
+                        if(board.OpenCell(Position2BoardIndex(inputCommand.Y, inputCommand.X)).IsDead)
                         {
                             Output("DEAD!!!!!!!!!!!!!");
                         }
                         break;
                     case InputCommandType.OpenEight:
-                        if(!board.OpenEightCell(Position2BoardIndex(inputCommand.Y, inputCommand.X)))
+                        if(!board.OpenEightCell(Position2BoardIndex(inputCommand.Y, inputCommand.X)).IsDead)
                         {
                             Output("DEAD!!!!!!!!!!!!!");
                         }

@@ -36,13 +36,22 @@ namespace Minesweeper.Common
         public MinesweeperCell[] FourLink = new MinesweeperCell[4];
     }
 
+    public class BoardOpenResult
+    {
+        public bool IsClear;
+        public bool IsDead;
+        public List<MinesweeperCell> StateChangedCells = new List<MinesweeperCell>();
+    }
+
     public class MinesweeperBoard 
     {
         public int Width { get; }
         public int Height { get; }
         public int BombNum { get; }
         public bool IsDead { get; private set; } = false;
-        public bool IsClear => !IsDead && board.Count(c => c.State == CellState.Close) == BombNum;
+        public bool IsClear => !IsDead && board.Count(c => c.State == CellState.Open) == (Width * Height) - BombNum;
+
+        private BoardOpenResult userControllResult = new BoardOpenResult();
 
         private List<MinesweeperCell> board = new List<MinesweeperCell>();
 
@@ -130,42 +139,59 @@ namespace Minesweeper.Common
 
         private bool EnableIndex(int y, int x) => (0 <= x && x < Width && 0 <= y && y < Height);
 
-        public bool OpenCell(int index)
+        public BoardOpenResult OpenCell(int index)
         {
-            var cell = board[index];
-            if(cell.State == CellState.Flag)
+            OpenCellSub(index, 0);
+            userControllResult.IsClear = IsClear;
+            userControllResult.IsDead = IsDead;
+            return userControllResult;
+        }
+
+        private void OpenCellSub(int index, int depth)
+        {
+            if(depth == 0)
             {
-                return true;
+                userControllResult = new BoardOpenResult();
+            }
+
+            var cell = board[index];
+            if(cell.State != CellState.Close)
+            {
+                return;
             }
             if(cell.HasBomb)
             {
                 Dead();
-                return false;
             }
 
             // 開く
             cell.State = CellState.Open;
+            userControllResult.StateChangedCells.Add(cell);
             if(cell.Value == 0)
             {
                 // 周囲のセルを開ける
-                cell.FourLink
+                cell.EightLink
                     .Where(c => c?.State == CellState.Close)
                     .ToList()
-                    .ForEach(c => OpenCell(c.BoardIndex));
+                    .ForEach(c => OpenCellSub(c.BoardIndex, depth + 1));
             }
-            return true;
         }
 
-        public bool OpenEightCell(int index)
+        public BoardOpenResult OpenEightCell(int index)
         {
-            return GetCellOrDefault(index)
+            userControllResult = new BoardOpenResult();
+            GetCellOrDefault(index)
                 .EightLink
                 .Where(c => c != null)
-                .All(c => OpenCell(c.BoardIndex));
+                .ForEach(c => OpenCellSub(c.BoardIndex, 1));
+            userControllResult.IsClear = IsClear;
+            userControllResult.IsDead = IsDead;
+            return userControllResult;
         }
 
-        public void ToggleFlag(int index)
+        public BoardOpenResult ToggleFlag(int index)
         {
+            userControllResult = new BoardOpenResult();
             var cell = board[index];
             if(cell.State == CellState.Close)
             {
@@ -175,6 +201,8 @@ namespace Minesweeper.Common
             {
                 cell.State = CellState.Close;
             }
+            userControllResult.StateChangedCells.Add(cell);
+            return userControllResult;
         }
 
         public void Dead()
