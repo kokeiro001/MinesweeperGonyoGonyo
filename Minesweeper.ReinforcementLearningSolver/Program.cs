@@ -21,7 +21,10 @@ namespace Minesweeper.ReinforcementLearningSolver
             //value.Deserialize(XDocument.Load("hoge.xml"));
 
             List<int> cleardCount = new List<int>();
-            MinesweeperLearner leaner = new MinesweeperLearner(value);
+
+            QLearningCom com = new QLearningCom(value, true);
+            MinesweeperGame game = new MinesweeperGame(5, 5, 5, 0);
+            MinesweeperLearner leaner = new MinesweeperLearner(game, com, value);
 
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
@@ -115,24 +118,25 @@ namespace Minesweeper.ReinforcementLearningSolver
     class MinesweeperLearner
     {
         EvaluationValue value;
+        QLearningCom com;
+        MinesweeperGame game;
 
-        public MinesweeperLearner(EvaluationValue value)
+        public MinesweeperLearner(MinesweeperGame game, QLearningCom com, EvaluationValue value)
         {
             this.value = value;
+            this.game = game;
+            this.com = com;
         }
 
         public bool Learn()
         {
             bool verbose = false;
 
-            QLearningCom com = new QLearningCom(value, true);
-            MinesweeperGame game = new MinesweeperGame(5, 5, 5, 0);
-            var board = game.Board;
             while(true)
             {
                 game.ClearBoard();
                 game.GenerateRandomBoard();
-                var currentAction = com.SelectCommand(board);
+                var currentAction = com.SelectCommand(game.Board);
 
                 var preActionBoardHash = game.Board.MakeHash();
                 var result = game.OpenCell(currentAction.Y * 5 + currentAction.X);

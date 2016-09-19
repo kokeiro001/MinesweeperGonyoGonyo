@@ -164,7 +164,6 @@ namespace Minesweeper.Common
             RandomSeed = seed;
 
             InitializeBoardOnce();
-            GenerateRandomBoard();
         }
 
         private void InitializeBoardOnce()
