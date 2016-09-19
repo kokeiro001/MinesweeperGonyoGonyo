@@ -136,12 +136,15 @@ namespace Minesweeper.Common
         public int Width { get; }
         public int Height { get; }
         public int BombNum { get; }
+        public int RandomSeed { get; }
         public bool IsDead { get; private set; } = false;
         public bool IsClear => !IsDead && Board.Count(c => c.State == CellState.Open) == (Width * Height) - BombNum;
 
         private BoardOpenResult userControllResult = new BoardOpenResult();
 
         public MinesweeperBoard Board { get; } = new MinesweeperBoard();
+
+        private Random random;
 
         public MinesweeperCell this[int index]
         {
@@ -154,28 +157,25 @@ namespace Minesweeper.Common
         }
         public MinesweeperGame(int width, int height, int bombNum, int seed)
         {
+            random = new Random(seed);
             Width = width;
             Height = height;
             BombNum = bombNum;
+            RandomSeed = seed;
 
-            CreateBoard(bombNum, seed);
+            InitializeBoardOnce();
+            GenerateRandomBoard();
         }
 
-        private void CreateBoard(int bombNum, int seed)
+        private void InitializeBoardOnce()
         {
-            int totalCellNum = Width * Height;
-
-            var bombIndexes = Enumerable.Range(0, totalCellNum).Shuffle(seed).Take(bombNum);
-
-            for(int i = 0; i < totalCellNum; i++)
+            for(int i = 0; i < Height * Width; i++)
             {
                 Board.Add(new MinesweeperCell()
                 {
                     BoardIndex = i,
-                    Value = bombIndexes.Contains(i) ? -1 : 0
                 });
             }
-
             var eightPoints = new Point[] {
                     new Point (-1, -1), new Point(-1, 0), new Point(-1, 1),
                     new Point ( 0, -1),                   new Point( 0, 1),
@@ -205,7 +205,32 @@ namespace Minesweeper.Common
                     }
                 }
             }
+        }
 
+        private void CreateBoard(int bombNum, int seed)
+        {
+            int totalCellNum = Width * Height;
+
+            var bombIndexes = Enumerable.Range(0, totalCellNum).Shuffle(seed).Take(bombNum);
+
+            for(int i = 0; i < totalCellNum; i++)
+            {
+                Board[i].State = CellState.Close;
+                Board[i].Value = bombIndexes.Contains(i) ? -1 : 0;
+            }
+
+            for(int y = 0; y < Height; y++)
+            {
+                for(int x = 0; x < Width; x++)
+                {
+                    var cell = Board[y * Width + x];
+
+                    if(!cell.HasBomb)
+                    {
+                        cell.Value = cell.EightLink.Count(c => c?.HasBomb == true);
+                    }
+                }
+            }
         }
 
         private MinesweeperCell GetCellOrDefault(int y, int x)
@@ -302,6 +327,16 @@ namespace Minesweeper.Common
                 .ForEach(cell => cell.State = CellState.Open);
         }
 
+        public void ClearBoard()
+        {
+            IsDead = false;
+            // TODO: 
+        }
+
+        public void GenerateRandomBoard()
+        {
+            CreateBoard(BombNum, random.Next());
+        }
 
     }
 }

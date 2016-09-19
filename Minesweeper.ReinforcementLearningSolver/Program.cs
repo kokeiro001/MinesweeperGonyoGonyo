@@ -14,11 +14,11 @@ namespace Minesweeper.ReinforcementLearningSolver
     {
         static void Main(string[] args)
         {
-            int learnCount = 10000;
+            int learnCount = 100000;
 
             // HACK: 評価関数的な奴。適宜ローカルに保存したりして、それを復元できるようにする
             EvaluationValue value = new EvaluationValue();
-            value.Deserialize(XDocument.Load("hoge.xml"));
+            //value.Deserialize(XDocument.Load("hoge.xml"));
 
             List<int> cleardCount = new List<int>();
             MinesweeperLearner leaner = new MinesweeperLearner(value);
@@ -36,12 +36,21 @@ namespace Minesweeper.ReinforcementLearningSolver
             stopwatch.Stop();
 
             // save
-            var xdoc = value.Serialize();
-            xdoc.Save("hoge.xml", SaveOptions.None);
+            //var xdoc = value.Serialize();
+            //xdoc.Save("hoge.xml", SaveOptions.None);
+            Utils.Output("| 要素 | 値");
+            Utils.Output("------------ | -------------");
+            Utils.Output($"学習回数|{learnCount}|");
+            Utils.Output($"ボードサイズ|5x5|");
+            Utils.Output($"爆弾の数|5|");
+            Utils.Output($"総クリア回数|{cleardCount.Count}|");
+            Utils.Output($"学習にかかった時間|{stopwatch.Elapsed.ToString()}|");
 
-            Utils.Output("!!!!!!!!!!!!Clear!!!!!!!!!!!!");
-            Utils.Output($"clearCount={cleardCount.Count}");
-            Utils.Output(stopwatch.Elapsed.ToString());
+            Utils.Output($"GC.CollectionCount(0)|{GC.CollectionCount(0).ToString()}|");
+            Utils.Output($"GC.CollectionCount(1)|{GC.CollectionCount(1).ToString()}|");
+            Utils.Output($"GC.CollectionCount(2)|{GC.CollectionCount(2).ToString()}|");
+
+            Utils.Output("-------------------------");
             cleardCount.ForEach(cnt => Utils.Output(cnt.ToString("D10")));
         }
     }
@@ -117,10 +126,12 @@ namespace Minesweeper.ReinforcementLearningSolver
             bool verbose = false;
 
             QLearningCom com = new QLearningCom(value, true);
-            MinesweeperGame game = new MinesweeperGame(5, 5, 5);
+            MinesweeperGame game = new MinesweeperGame(5, 5, 5, 0);
             var board = game.Board;
             while(true)
             {
+                game.ClearBoard();
+                game.GenerateRandomBoard();
                 var currentAction = com.SelectCommand(board);
 
                 var preActionBoardHash = game.Board.MakeHash();
@@ -172,16 +183,25 @@ namespace Minesweeper.ReinforcementLearningSolver
         // value[boardHash][command] = reward
         Dictionary<string, Dictionary<GameCommand, double>> valueDic = new Dictionary<string, Dictionary<GameCommand, double>>();
 
-        public GameCommand GetMaxCommand(MinesweeperBoard state)
+        public GameCommand GetMaxCommand(MinesweeperBoard board)
         {
-            if(valueDic.Count == 0)
+            var boardHash = board.MakeHash();
+            if(!valueDic.ContainsKey(boardHash))
             {
-                return null;
+                valueDic.Add(boardHash, new Dictionary<GameCommand, double>());
             }
-            return valueDic
-                    .SelectMany(val => val.Value)
-                    .OrderBy(innerDic => innerDic.Value)
-                    .FirstOrDefault().Key;
+
+            double maxValue = 0.0;
+            GameCommand maxCommand = null;
+            foreach(var item in valueDic[boardHash])
+            {
+                if(item.Value >= maxValue)
+                {
+                    maxCommand = item.Key;
+                    maxValue = item.Value;
+                }
+            }
+            return maxCommand;
         }
 
         public void Update(string boardHash, GameCommand command, double reward)
