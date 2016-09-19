@@ -56,11 +56,6 @@ namespace Minesweeper.ReinforcementLearningSolver
             Utils.Output("-------------------------");
             cleardCount.ForEach(cnt => Utils.Output(cnt.ToString("D10")));
             Utils.Output("-------------------------");
-            //Utils.Output($"hogeDic");
-            //foreach(var item in MinesweeperLearner.hogeDic.OrderBy(p => p.Key))
-            //{
-            //    Utils.Output($"{item.Key} ; {item.Value}");
-            //}
         }
     }
 
@@ -123,7 +118,7 @@ namespace Minesweeper.ReinforcementLearningSolver
 
     class MinesweeperLearner
     {
-        public  static Dictionary<int, int> hogeDic = new Dictionary<int, int>();
+        public static ulong[] boardHashBuf = new ulong[2];
         EvaluationValue value;
         QLearningCom com;
         MinesweeperGame game;
@@ -146,15 +141,9 @@ namespace Minesweeper.ReinforcementLearningSolver
             {
                 var currentAction = com.SelectCommand(game.Board);
 
-                var preActionBoardHash = game.Board.MakeHash();
+                game.Board.MakeHash(boardHashBuf);
                 int idx = currentAction.Y * 5 + currentAction.X; // HACK: hardcorded
                 var result = game.OpenCell(idx);
-
-                if(!hogeDic.ContainsKey(idx))
-                {
-                    hogeDic.Add(idx, 0);
-                }
-                hogeDic[idx]++;
 
                 if(verbose)
                 {
@@ -163,7 +152,7 @@ namespace Minesweeper.ReinforcementLearningSolver
 
                 if(result.IsClear)
                 {
-                    com.Learn(preActionBoardHash, currentAction, 1);
+                    com.Learn(boardHashBuf, currentAction, 1);
                     if(verbose)
                     {
                         Utils.Output("Clear!!!");
@@ -172,7 +161,7 @@ namespace Minesweeper.ReinforcementLearningSolver
                 }
                 else if(result.IsDead)
                 {
-                    com.Learn(preActionBoardHash, currentAction, -1);
+                    com.Learn(boardHashBuf, currentAction, -1);
                     if(verbose)
                     {
                         Utils.Output("Dead...");
@@ -184,12 +173,58 @@ namespace Minesweeper.ReinforcementLearningSolver
                     // 状態が変わったセルの数に応じて、報酬を与える
                     if(result.StateChangedCells.Count == 1)
                     {
-                        com.Learn(preActionBoardHash, currentAction, 0.05);
+                        com.Learn(boardHashBuf, currentAction, 0.05);
                     }
                     else
                     {
-                        com.Learn(preActionBoardHash, currentAction, 0.1);
+                        com.Learn(boardHashBuf, currentAction, 0.1);
                     }
+                }
+            }
+        }
+    }
+
+
+    class UlongsDictionary<T>
+    {
+        private readonly int ArraySize = 2;
+
+        Dictionary<ulong, Dictionary<ulong, T>> dictionary = new Dictionary<ulong, Dictionary<ulong, T>>();
+
+        public void Add(ulong[] key, T value)
+        {
+            Debug.Assert(key.Length == ArraySize);
+            Debug.Assert(!(dictionary.ContainsKey(key[0]) && dictionary[key[0]].ContainsKey(key[1])));
+
+            if(!dictionary.ContainsKey(key[0]))
+            {
+                dictionary.Add(key[0], new Dictionary<ulong, T>());
+            }
+
+            dictionary[key[0]].Add(key[1], value);
+        }
+
+        public bool ContainsKey(ulong[] key)
+        {
+            return dictionary.ContainsKey(key[0]) && dictionary[key[0]].ContainsKey(key[1]);
+        }
+
+        public T Get(ulong[] key)
+        {
+            return dictionary[key[0]][key[1]];
+        }
+
+        public IEnumerable<ulong[]> CalculateKeys()
+        {
+            foreach(var item in dictionary)
+            {
+                foreach(var item2 in item.Value)
+                {
+                    yield return new ulong[] 
+                    {
+                        item.Key,
+                        item2.Key
+                    };
                 }
             }
         }
@@ -199,20 +234,21 @@ namespace Minesweeper.ReinforcementLearningSolver
     {
         static float stepSize = 0.1f;
 
-        // value[boardHash][command] = reward
-        Dictionary<string, Dictionary<GameCommand, double>> valueDic = new Dictionary<string, Dictionary<GameCommand, double>>();
+        UlongsDictionary<Dictionary<GameCommand, double>> valueDic = new UlongsDictionary<Dictionary<GameCommand, double>>();
+
+        static ulong[] boardHashBuf = new ulong[2];
 
         public GameCommand GetMaxCommand(MinesweeperBoard board)
         {
-            var boardHash = board.MakeHash();
-            if(!valueDic.ContainsKey(boardHash))
+            board.MakeHash(boardHashBuf);
+            if(!valueDic.ContainsKey(boardHashBuf))
             {
-                valueDic.Add(boardHash, new Dictionary<GameCommand, double>());
+                valueDic.Add(boardHashBuf, new Dictionary<GameCommand, double>());
             }
 
             double maxValue = 0.0;
             GameCommand maxCommand = null;
-            foreach(var item in valueDic[boardHash])
+            foreach(var item in valueDic.Get(boardHashBuf))
             {
                 if(item.Value >= maxValue)
                 {
@@ -223,17 +259,17 @@ namespace Minesweeper.ReinforcementLearningSolver
             return maxCommand;
         }
 
-        public void Update(string boardHash, GameCommand command, double reward)
+        public void Update(ulong[] boardHash, GameCommand command, double reward)
         {
             if(!valueDic.ContainsKey(boardHash))
             {
                 valueDic.Add(boardHash, new Dictionary<GameCommand, double>());
             }
-            if(!valueDic[boardHash].ContainsKey(command))
+            if(!valueDic.Get(boardHashBuf).ContainsKey(command))
             {
-                valueDic[boardHash].Add(command, 0);
+                valueDic.Get(boardHashBuf).Add(command, 0);
             }
-            valueDic[boardHash][command] += stepSize * (reward - valueDic[boardHash][command]);
+            valueDic.Get(boardHashBuf)[command] += stepSize * (reward - valueDic.Get(boardHashBuf)[command]);
         }
 
         public XDocument Serialize()
@@ -241,17 +277,19 @@ namespace Minesweeper.ReinforcementLearningSolver
             XDocument xdoc = new XDocument();
             XElement root = new XElement("root");
             xdoc.Add(root);
-            foreach(var pair in valueDic)
+            foreach(var key in valueDic.CalculateKeys())
             {
-                XElement elem = new XElement("boardHash", pair.Key);
-                foreach(var item in pair.Value)
+                XElement boardHashElem = new XElement("boardHash",
+                        new XAttribute("hash0", key[0]),
+                        new XAttribute("hash1", key[1]));
+                foreach(var value in valueDic.Get(key))
                 {
-                    elem.Add(new XElement($"command",
-                        new XAttribute("X", item.Key.X),
-                        new XAttribute("Y", item.Key.Y),
-                        new XAttribute("value", item.Value)));
+                    boardHashElem.Add(new XElement($"command",
+                        new XAttribute("X", value.Key.X),
+                        new XAttribute("Y", value.Key.Y),
+                        new XAttribute("value", value.Value)));
                 }
-                root.Add(elem);
+                root.Add(boardHashElem);
             }
             return xdoc;
         }
@@ -261,8 +299,10 @@ namespace Minesweeper.ReinforcementLearningSolver
             XElement root = xdoc.Element("root");
             foreach(var boardHashElem in root.Elements("boardHash"))
             {
-                var boardHash = boardHashElem.Value;
-                valueDic.Add(boardHash, new Dictionary<GameCommand, double>());
+                boardHashBuf[0] = ulong.Parse(boardHashElem.Attribute("hash0").Value);
+                boardHashBuf[1] = ulong.Parse(boardHashElem.Attribute("hash1").Value);
+                
+                valueDic.Add(boardHashBuf, new Dictionary<GameCommand, double>());
 
                 foreach(var commandElem in boardHashElem.Elements("command"))
                 {
@@ -271,7 +311,7 @@ namespace Minesweeper.ReinforcementLearningSolver
                         int.Parse(commandElem.Attribute("X").Value),
                         GameCommandType.Open);
                     double value = double.Parse(commandElem.Attribute("value").Value);
-                    valueDic[boardHash].Add(command, value);
+                    valueDic.Get(boardHashBuf).Add(command, value);
                 }
             }
         }
@@ -308,7 +348,7 @@ namespace Minesweeper.ReinforcementLearningSolver
             return selectedCommand;
         }
 
-        public void Learn(string beforeBoardHash, GameCommand command, double reward)
+        public void Learn(ulong[] beforeBoardHash, GameCommand command, double reward)
         {
             if(learning)
             {

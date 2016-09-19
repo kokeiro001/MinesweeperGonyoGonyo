@@ -111,23 +111,34 @@ namespace Minesweeper.Common
 
         public void Add(MinesweeperCell cell) => cellList.Add(cell);
 
-        public string MakeHash()
+        public void MakeHash(ulong[] hash)
         {
-            StringBuilder sb = new StringBuilder();
+            hash[0] = 0;
+            hash[1] = 0;
 
-            Func<MinesweeperCell, string> cell2Hash = c => {
-                if(c.State == CellState.Open)
+            int cellIndex = 0;
+            int arrayIndex = 0;
+            do
+            {
+                hash[arrayIndex] <<= 4;
+                uint tmp = 0;
+                if(cellList[cellIndex].State == CellState.Close)
                 {
-                    return c.Value.ToString();
+                    tmp = 15;
                 }
-                else
+                else if(cellList[cellIndex].State == CellState.Open)
                 {
-                    return "?";
+                    tmp = (uint)cellList[cellIndex].Value;
                 }
-            };
+                hash[arrayIndex] |= tmp;
 
-            cellList.ForEach(c => sb.Append(cell2Hash(c)));
-            return sb.ToString();
+                cellIndex++;
+                if(cellIndex % 16 == 0)
+                {
+                    arrayIndex++;
+                }
+
+            } while(cellIndex < cellList.Count);
         }
     }
 
