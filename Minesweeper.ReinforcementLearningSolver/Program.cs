@@ -68,12 +68,20 @@ namespace Minesweeper.ReinforcementLearningSolver
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            for(int i = 0; i < learnCount; i++)
+
+            try
             {
-                if(leaner.Learn())
+                for(int i = 0; i < learnCount; i++)
                 {
-                    cleardCount.Add(i);
+                    if(leaner.Learn())
+                    {
+                        cleardCount.Add(i);
+                    }
                 }
+            }
+            catch(Exception e)
+            {
+                logger.Error("メモリなくなったんじゃないかな(´・ω・`)", e);
             }
             stopwatch.Stop();
 
