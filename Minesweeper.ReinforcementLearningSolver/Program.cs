@@ -16,7 +16,6 @@ namespace Minesweeper.ReinforcementLearningSolver
         {
             int learnCount = 100000;
 
-            // HACK: 評価関数的な奴。適宜ローカルに保存したりして、それを復元できるようにする
             EvaluationValue value = new EvaluationValue();
             //value.Deserialize(XDocument.Load("hoge.xml"));
 
@@ -41,6 +40,7 @@ namespace Minesweeper.ReinforcementLearningSolver
             // save
             //var xdoc = value.Serialize();
             //xdoc.Save("hoge.xml", SaveOptions.None);
+
             Utils.Output("| 要素 | 値");
             Utils.Output("------------ | -------------");
             Utils.Output($"学習回数|{learnCount}|");
@@ -55,6 +55,12 @@ namespace Minesweeper.ReinforcementLearningSolver
 
             Utils.Output("-------------------------");
             cleardCount.ForEach(cnt => Utils.Output(cnt.ToString("D10")));
+            Utils.Output("-------------------------");
+            //Utils.Output($"hogeDic");
+            //foreach(var item in MinesweeperLearner.hogeDic.OrderBy(p => p.Key))
+            //{
+            //    Utils.Output($"{item.Key} ; {item.Value}");
+            //}
         }
     }
 
@@ -117,6 +123,7 @@ namespace Minesweeper.ReinforcementLearningSolver
 
     class MinesweeperLearner
     {
+        public  static Dictionary<int, int> hogeDic = new Dictionary<int, int>();
         EvaluationValue value;
         QLearningCom com;
         MinesweeperGame game;
@@ -132,14 +139,22 @@ namespace Minesweeper.ReinforcementLearningSolver
         {
             bool verbose = false;
 
+            game.ClearBoard();
+            game.GenerateRandomBoard();
+
             while(true)
             {
-                game.ClearBoard();
-                game.GenerateRandomBoard();
                 var currentAction = com.SelectCommand(game.Board);
 
                 var preActionBoardHash = game.Board.MakeHash();
-                var result = game.OpenCell(currentAction.Y * 5 + currentAction.X);
+                int idx = currentAction.Y * 5 + currentAction.X; // HACK: hardcorded
+                var result = game.OpenCell(idx);
+
+                if(!hogeDic.ContainsKey(idx))
+                {
+                    hogeDic.Add(idx, 0);
+                }
+                hogeDic[idx]++;
 
                 if(verbose)
                 {
@@ -264,7 +279,7 @@ namespace Minesweeper.ReinforcementLearningSolver
 
     class QLearningCom
     {
-        static Random random = new Random();
+        static Random random = new Random(0);
         static double epsilon = 0.1;
 
         EvaluationValue value;
