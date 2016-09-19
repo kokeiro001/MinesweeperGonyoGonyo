@@ -13,20 +13,38 @@ namespace Minesweeper.ReinforcementLearningSolver
 {
     static class LogInitializer
     {
-        public static void InitLog()
+        public static void InitLog(string loggerName)
         {
-            var ilogger = log4net.LogManager.GetLogger("MainLog");
+            var ilogger = LogManager.GetLogger(loggerName);
+
+            var layout = new log4net.Layout.PatternLayout(@"%-5level %date{yyyy/MM/dd_HH:mm:ss,fff} [%thread] %logger - %message%newline");
+
             var fileAppender = new log4net.Appender.FileAppender()
             {
-                Layout = new log4net.Layout.PatternLayout(@"%-5level %date{yyyy/MM/dd_HH:mm:ss,fff} [%thread] %logger - %message%newline"),
-                File = "log.txt",
-                AppendToFile = true
+                Layout = layout,
+                File = $"{loggerName}.txt",
+                AppendToFile = true,
             };
+            var consoleAppender = new log4net.Appender.ConsoleAppender()
+            {
+                Layout = layout,
+            };
+            var debugAppender = new log4net.Appender.DebugAppender()
+            {
+                Layout = layout,
+            };
+
             var logger = ilogger.Logger as log4net.Repository.Hierarchy.Logger;
             logger.Level = log4net.Core.Level.All;
             logger.AddAppender(fileAppender);
+            logger.AddAppender(consoleAppender);
+            logger.AddAppender(debugAppender);
+
             logger.Repository.Configured = true;
+
             fileAppender.ActivateOptions();
+            consoleAppender.ActivateOptions();
+            debugAppender.ActivateOptions();
         }
     }
 
@@ -34,10 +52,9 @@ namespace Minesweeper.ReinforcementLearningSolver
     {
         static private ILog logger = LogManager.GetLogger("MainLog");
 
-
         static void Main(string[] args)
         {
-            LogInitializer.InitLog();
+            LogInitializer.InitLog("MainLog");
             int learnCount = 10000;
 
             EvaluationValue value = new EvaluationValue();
@@ -64,21 +81,21 @@ namespace Minesweeper.ReinforcementLearningSolver
             //var xdoc = value.Serialize();
             //xdoc.Save("hoge.xml", SaveOptions.None);
 
-            Utils.Output("| 要素 | 値");
-            Utils.Output("------------ | -------------");
-            Utils.Output($"学習回数|{learnCount}|");
-            Utils.Output($"ボードサイズ|5x5|");
-            Utils.Output($"爆弾の数|5|");
-            Utils.Output($"総クリア回数|{cleardCount.Count}|");
-            Utils.Output($"学習にかかった時間|{stopwatch.Elapsed.ToString()}|");
+            logger.Info("| 要素 | 値");
+            logger.Info("------------ | -------------");
+            logger.Info($"学習回数|{learnCount}|");
+            logger.Info($"ボードサイズ|5x5|");
+            logger.Info($"爆弾の数|5|");
+            logger.Info($"総クリア回数|{cleardCount.Count}|");
+            logger.Info($"学習にかかった時間|{stopwatch.Elapsed.ToString()}|");
 
-            Utils.Output($"GC.CollectionCount(0)|{GC.CollectionCount(0).ToString()}|");
-            Utils.Output($"GC.CollectionCount(1)|{GC.CollectionCount(1).ToString()}|");
-            Utils.Output($"GC.CollectionCount(2)|{GC.CollectionCount(2).ToString()}|");
+            logger.Info($"GC.CollectionCount(0)|{GC.CollectionCount(0).ToString()}|");
+            logger.Info($"GC.CollectionCount(1)|{GC.CollectionCount(1).ToString()}|");
+            logger.Info($"GC.CollectionCount(2)|{GC.CollectionCount(2).ToString()}|");
 
-            Utils.Output("-------------------------");
-            cleardCount.ForEach(cnt => Utils.Output(cnt.ToString("D10")));
-            Utils.Output("-------------------------");
+            logger.Info("-------------------------");
+            cleardCount.ForEach(cnt => logger.Debug(cnt.ToString("D10")));
+            logger.Info("-------------------------");
         }
     }
 
@@ -125,20 +142,11 @@ namespace Minesweeper.ReinforcementLearningSolver
                 }
                 sb.AppendLine();
             }
-            Utils.Output(sb.ToString());
+            LogManager.GetLogger("MainLog").Info(sb.ToString());
         }
 
     }
 
-    static class Utils
-    {
-        public static void Output(string text)
-        {
-            Console.WriteLine(text);
-            Debug.WriteLine(text);
-            LogManager.GetLogger("MainLog").Info(text);
-        }
-    }
 
     class MinesweeperLearner
     {
