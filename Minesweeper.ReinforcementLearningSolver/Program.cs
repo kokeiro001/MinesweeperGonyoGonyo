@@ -52,13 +52,14 @@ namespace Minesweeper.ReinforcementLearningSolver
     {
         static private ILog logger = LogManager.GetLogger("MainLog");
 
+        static private int LearnCount = 10000000;
+
         static void Main(string[] args)
         {
             LogInitializer.InitLog("MainLog");
-            int learnCount = 10000;
 
             EvaluationValue value = new EvaluationValue();
-            //value.Deserialize(XDocument.Load("hoge.xml"));
+            //value.Deserialize(XDocument.Load("value.xml"));
             List<int> cleardCount = new List<int>();
 
             QLearningCom com = new QLearningCom(value, true);
@@ -71,12 +72,13 @@ namespace Minesweeper.ReinforcementLearningSolver
 
             try
             {
-                for(int i = 0; i < learnCount; i++)
+                for(int i = 0; i < LearnCount; i++)
                 {
                     if(leaner.Learn())
                     {
                         cleardCount.Add(i);
                     }
+                    ProgressView(i);
                 }
             }
             catch(Exception e)
@@ -86,12 +88,12 @@ namespace Minesweeper.ReinforcementLearningSolver
             stopwatch.Stop();
 
             // save
-            //var xdoc = value.Serialize();
-            //xdoc.Save("hoge.xml", SaveOptions.None);
+            var xdoc = value.Serialize();
+            xdoc.Save("value.xml", SaveOptions.None);
 
             logger.Info("| 要素 | 値");
             logger.Info("------------ | -------------");
-            logger.Info($"学習回数|{learnCount}|");
+            logger.Info($"学習回数|{LearnCount}|");
             logger.Info($"ボードサイズ|5x5|");
             logger.Info($"爆弾の数|5|");
             logger.Info($"総クリア回数|{cleardCount.Count}|");
@@ -104,6 +106,17 @@ namespace Minesweeper.ReinforcementLearningSolver
             logger.Info("-------------------------");
             cleardCount.ForEach(cnt => logger.Debug(cnt.ToString("D10")));
             logger.Info("-------------------------");
+        }
+
+        static int progress = 0;
+        static void ProgressView(int currentLeanCount)
+        {
+            float per = ((float)currentLeanCount / LearnCount) * 100f;
+            if(per >= progress)
+            {
+                progress += 1;
+                logger.Debug($"Progress={progress}%");
+            }
         }
     }
 
