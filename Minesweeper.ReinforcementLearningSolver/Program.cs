@@ -52,7 +52,7 @@ namespace Minesweeper.ReinforcementLearningSolver
         {
             return board
                     .Where(c => c.State == CellState.Close)
-                    .Select(c => new GameCommand() { Y = c.BoardIndex / 5, X = c.BoardIndex % 5 }) // HACK: hardcorded
+                    .Select(c => new GameCommand(c.BoardIndex / 5, c.BoardIndex % 5, GameCommandType.Open)) // HACK: hardcorded
                     .ToArray();
         }
 
@@ -165,28 +165,6 @@ namespace Minesweeper.ReinforcementLearningSolver
         }
     }
 
-    class GameCommand
-    {
-        public int Y;
-        public int X;
-
-        public override bool Equals(object obj)
-        {
-            var tmp = obj as GameCommand;
-            if(tmp != null)
-            {
-                return tmp.X == X && tmp.Y == Y;
-            }
-            return false;
-        }
-
-        public override int GetHashCode()
-        {
-            // HACK: 
-            return Y * 100 + X;
-        }
-    }
-
     class EvaluationValue
     {
         static float stepSize = 0.1f;
@@ -249,11 +227,10 @@ namespace Minesweeper.ReinforcementLearningSolver
 
                 foreach(var commandElem in boardHashElem.Elements("command"))
                 {
-                    var command = new GameCommand()
-                    {
-                        X = int.Parse(commandElem.Attribute("X").Value),
-                        Y = int.Parse(commandElem.Attribute("Y").Value)
-                    };
+                    var command = new GameCommand(
+                        int.Parse(commandElem.Attribute("Y").Value),
+                        int.Parse(commandElem.Attribute("X").Value),
+                        GameCommandType.Open);
                     double value = double.Parse(commandElem.Attribute("value").Value);
                     valueDic[boardHash].Add(command, value);
                 }

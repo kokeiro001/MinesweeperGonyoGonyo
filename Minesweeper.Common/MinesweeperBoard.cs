@@ -8,6 +8,55 @@ using System.Collections;
 
 namespace Minesweeper.Common
 {
+    public enum GameCommandType
+    {
+        Open,
+        OpenEight,
+        ToggleFlag
+    }
+
+    public class GameCommand
+    {
+        public GameCommandType Type { get; }
+        public int Y { get; }
+        public int X { get; }
+
+        public GameCommand(int y, int x, GameCommandType type)
+        {
+            Y = y;
+            X = x;
+            Type = type;
+        }
+
+        public static GameCommand FromUserInput(string parseText)
+        {
+            var input = parseText.Split(' ');
+            if(input.Length != 3)
+            {
+                throw new InvalidOperationException();
+            }
+            GameCommandType type;
+            switch(input[0])
+            {
+                case "open":
+                    type = GameCommandType.Open;
+                    break;
+                case "openEight":
+                    type = GameCommandType.OpenEight;
+                    break;
+                case "flag":
+                    type = GameCommandType.ToggleFlag;
+                    break;
+                default:
+                    throw new InvalidOperationException();
+            }
+
+            int y = int.Parse(input[1]);
+            int x = int.Parse(input[2]);
+            return new GameCommand(y, x, type);
+        }
+    }
+
     public class Point
     {
         public int X;
@@ -19,6 +68,7 @@ namespace Minesweeper.Common
             X = x;
         }
     }
+
     public enum CellState
     {
         Close,

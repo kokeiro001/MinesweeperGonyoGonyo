@@ -11,54 +11,6 @@ namespace Minesweeper.ConsoleApp
 {
     class Program
     {
-        enum GameCommandType
-        {
-            Open,
-            OpenEight,
-            ToggleFlag
-        }
-
-        class GameCommand
-        {
-            public GameCommandType Type { get; private set; }
-            public int Y { get; private set; }
-            public int X { get; private set; }
-
-            public GameCommand()
-            {
-
-            }
-
-            public static GameCommand FromUserInput(string parseText)
-            {
-                var command = new GameCommand();
-                var input = parseText.Split(' ');
-                if(input.Length != 3)
-                {
-                    Output("入力形式違うYO");
-                }
-
-                switch(input[0])
-                {
-                    case "open":
-                        command.Type = GameCommandType.Open;
-                        break;
-                    case "openEight":
-                        command.Type = GameCommandType.OpenEight;
-                        break;
-                    case "flag":
-                        command.Type = GameCommandType.ToggleFlag;
-                        break;
-                    default:
-                        throw new InvalidOperationException();
-                }
-
-                command.Y = int.Parse(input[1]);
-                command.X = int.Parse(input[2]);
-                return command;
-            }
-        }
-
         static MinesweeperGame board = new MinesweeperGame(10, 10, 10, 2);
 
         static void Main(string[] args)
