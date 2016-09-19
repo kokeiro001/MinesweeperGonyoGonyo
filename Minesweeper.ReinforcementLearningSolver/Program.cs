@@ -16,7 +16,7 @@ namespace Minesweeper.ReinforcementLearningSolver
             int learnCount = 10000000;
 
             // HACK: 評価関数的な奴。適宜ローカルに保存したりして、それを復元できるようにする
-            ValueClass value = new ValueClass();
+            EvaluationValue value = new EvaluationValue();
 
             List<int> cleardCount = new List<int>();
             MinesweeperLearner leaner = new MinesweeperLearner(value);
@@ -45,11 +45,11 @@ namespace Minesweeper.ReinforcementLearningSolver
 
     static class MinesweeperExtensions
     {
-        public static ActionClass[] ValidActions(this MinesweeperBoard board)
+        public static GameCommand[] ValidActions(this MinesweeperBoard board)
         {
             return board
                     .Where(c => c.State == CellState.Close)
-                    .Select(c => new ActionClass() { Y = c.BoardIndex / 5, X = c.BoardIndex % 5 }) // HACK: hardcorded
+                    .Select(c => new GameCommand() { Y = c.BoardIndex / 5, X = c.BoardIndex % 5 }) // HACK: hardcorded
                     .ToArray();
         }
 
@@ -102,9 +102,9 @@ namespace Minesweeper.ReinforcementLearningSolver
 
     class MinesweeperLearner
     {
-        ValueClass value;
+        EvaluationValue value;
 
-        public MinesweeperLearner(ValueClass value)
+        public MinesweeperLearner(EvaluationValue value)
         {
             this.value = value;
         }
@@ -154,14 +154,14 @@ namespace Minesweeper.ReinforcementLearningSolver
         }
     }
 
-    class ActionClass
+    class GameCommand
     {
         public int Y;
         public int X;
 
         public override bool Equals(object obj)
         {
-            var tmp = obj as ActionClass;
+            var tmp = obj as GameCommand;
             if(tmp != null)
             {
                 return tmp.X == X && tmp.Y == Y;
@@ -176,14 +176,14 @@ namespace Minesweeper.ReinforcementLearningSolver
         }
     }
 
-    class ValueClass
+    class EvaluationValue
     {
         static float stepSize = 0.1f;
 
         // value[boardHash][actionHash] = reward
-        Dictionary<string, Dictionary<ActionClass, double>> value = new  Dictionary<string, Dictionary<ActionClass, double>>();
+        Dictionary<string, Dictionary<GameCommand, double>> value = new  Dictionary<string, Dictionary<GameCommand, double>>();
 
-        public ActionClass GetMaxAction(MinesweeperBoard state)
+        public GameCommand GetMaxAction(MinesweeperBoard state)
         {
             if(value.Count == 0)
             {
@@ -195,11 +195,11 @@ namespace Minesweeper.ReinforcementLearningSolver
                     .FirstOrDefault().Key;
         }
 
-        public void Update(string boardHash, ActionClass action, double reward)
+        public void Update(string boardHash, GameCommand action, double reward)
         {
             if(!value.ContainsKey(boardHash))
             {
-                value.Add(boardHash, new Dictionary<ActionClass, double>());
+                value.Add(boardHash, new Dictionary<GameCommand, double>());
             }
             if(!value[boardHash].ContainsKey(action))
             {
@@ -207,6 +207,7 @@ namespace Minesweeper.ReinforcementLearningSolver
             }
             value[boardHash][action] += stepSize * (reward - value[boardHash][action]);
         }
+
     }
 
    class QLearningCom {
@@ -214,16 +215,16 @@ namespace Minesweeper.ReinforcementLearningSolver
         static Random random = new Random();
         static double epsilon = 0.1;
 
-        ValueClass value;
+        EvaluationValue value;
         public bool learning { get; private set; }
 
-        public QLearningCom(ValueClass value, bool learning)
+        public QLearningCom(EvaluationValue value, bool learning)
         {
             this.value = value;
             this.learning = learning;
         }
 
-        public ActionClass SelectAction(MinesweeperBoard state)
+        public GameCommand SelectAction(MinesweeperBoard state)
         {
             var maxAction = value.GetMaxAction(state);
             var selectedAction = maxAction;
@@ -240,7 +241,7 @@ namespace Minesweeper.ReinforcementLearningSolver
             return selectedAction;
         }
 
-        public void Learn(string beforeBoardHash, ActionClass action, double reward)
+        public void Learn(string beforeBoardHash, GameCommand action, double reward)
         {
             if(learning)
             {

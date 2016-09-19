@@ -90,7 +90,6 @@ namespace Minesweeper.Common
         private BoardOpenResult userControllResult = new BoardOpenResult();
 
         public MinesweeperBoard Board { get; } = new MinesweeperBoard();
-        //private List<MinesweeperCell> board = new List<MinesweeperCell>();
 
         public MinesweeperCell this[int index]
         {
