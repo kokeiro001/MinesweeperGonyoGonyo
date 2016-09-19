@@ -251,5 +251,7 @@ namespace Minesweeper.Common
                 .Where(cell => cell.State == CellState.Close)
                 .ForEach(cell => cell.State = CellState.Open);
         }
+
+
     }
 }

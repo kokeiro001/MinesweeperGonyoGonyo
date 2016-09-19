@@ -11,21 +11,27 @@ namespace Minesweeper.ConsoleApp
 {
     class Program
     {
-        enum InputCommandType
+        enum GameCommandType
         {
             Open,
             OpenEight,
             ToggleFlag
         }
 
-        class InputCommand
+        class GameCommand
         {
-            public InputCommandType Type { get; }
-            public int Y { get; }
-            public int X { get; }
+            public GameCommandType Type { get; private set; }
+            public int Y { get; private set; }
+            public int X { get; private set; }
 
-            public InputCommand(string parseText)
+            public GameCommand()
             {
+
+            }
+
+            public static GameCommand FromUserInput(string parseText)
+            {
+                var command = new GameCommand();
                 var input = parseText.Split(' ');
                 if(input.Length != 3)
                 {
@@ -35,20 +41,21 @@ namespace Minesweeper.ConsoleApp
                 switch(input[0])
                 {
                     case "open":
-                        Type = InputCommandType.Open;
+                        command.Type = GameCommandType.Open;
                         break;
                     case "openEight":
-                        Type = InputCommandType.OpenEight;
+                        command.Type = GameCommandType.OpenEight;
                         break;
                     case "flag":
-                        Type = InputCommandType.ToggleFlag;
+                        command.Type = GameCommandType.ToggleFlag;
                         break;
                     default:
                         throw new InvalidOperationException();
                 }
 
-                Y = int.Parse(input[1]);
-                X = int.Parse(input[2]);
+                command.Y = int.Parse(input[1]);
+                command.X = int.Parse(input[2]);
+                return command;
             }
         }
 
@@ -62,10 +69,10 @@ namespace Minesweeper.ConsoleApp
                 ShowBoardRaw();
                 ShowBoardUser();
 
-                InputCommand inputCommand;
+                GameCommand inputCommand;
                 try
                 {
-                    inputCommand = new InputCommand(Console.ReadLine());
+                    inputCommand = GameCommand.FromUserInput(Console.ReadLine());
                 }
                 catch(Exception e)
                 {
@@ -74,19 +81,19 @@ namespace Minesweeper.ConsoleApp
                 }
                 switch(inputCommand.Type)
                 {
-                    case InputCommandType.Open:
+                    case GameCommandType.Open:
                         if(board.OpenCell(Position2BoardIndex(inputCommand.Y, inputCommand.X)).IsDead)
                         {
                             Output("DEAD!!!!!!!!!!!!!");
                         }
                         break;
-                    case InputCommandType.OpenEight:
+                    case GameCommandType.OpenEight:
                         if(!board.OpenEightCell(Position2BoardIndex(inputCommand.Y, inputCommand.X)).IsDead)
                         {
                             Output("DEAD!!!!!!!!!!!!!");
                         }
                         break;
-                    case InputCommandType.ToggleFlag:
+                    case GameCommandType.ToggleFlag:
                         board.ToggleFlag(Position2BoardIndex(inputCommand.Y, inputCommand.X));
                         break;
                     default:

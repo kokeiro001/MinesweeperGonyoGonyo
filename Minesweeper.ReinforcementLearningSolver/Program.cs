@@ -25,16 +25,12 @@ namespace Minesweeper.ReinforcementLearningSolver
 
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
+
             for(int i = 0; i < learnCount; i++)
             {
                 if(leaner.Learn())
                 {
                     cleardCount.Add(i);
-                    //Utils.Output($"{i:D10} clear!!!");
-                }
-                else
-                {
-                    //Utils.Output($"{i:D10} dead...");
                 }
             }
             stopwatch.Stop();
@@ -267,7 +263,6 @@ namespace Minesweeper.ReinforcementLearningSolver
 
     class QLearningCom
     {
-
         static Random random = new Random();
         static double epsilon = 0.1;
 
