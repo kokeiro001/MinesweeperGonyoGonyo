@@ -7,18 +7,41 @@ using Minesweeper.Common;
 using System.Diagnostics;
 using MoreLinq;
 using System.Xml.Linq;
+using log4net;
 
 namespace Minesweeper.ReinforcementLearningSolver
 {
+    static class LogInitializer
+    {
+        public static void InitLog()
+        {
+            var ilogger = log4net.LogManager.GetLogger("MainLog");
+            var fileAppender = new log4net.Appender.FileAppender()
+            {
+                Layout = new log4net.Layout.PatternLayout(@"%-5level %date{yyyy/MM/dd_HH:mm:ss,fff} [%thread] %logger - %message%newline"),
+                File = "log.txt",
+                AppendToFile = true
+            };
+            var logger = ilogger.Logger as log4net.Repository.Hierarchy.Logger;
+            logger.Level = log4net.Core.Level.All;
+            logger.AddAppender(fileAppender);
+            logger.Repository.Configured = true;
+            fileAppender.ActivateOptions();
+        }
+    }
+
     class Program
     {
+        static private ILog logger = LogManager.GetLogger("MainLog");
+
+
         static void Main(string[] args)
         {
-            int learnCount = 100000;
+            LogInitializer.InitLog();
+            int learnCount = 10000;
 
             EvaluationValue value = new EvaluationValue();
             //value.Deserialize(XDocument.Load("hoge.xml"));
-
             List<int> cleardCount = new List<int>();
 
             QLearningCom com = new QLearningCom(value, true);
@@ -113,6 +136,7 @@ namespace Minesweeper.ReinforcementLearningSolver
         {
             Console.WriteLine(text);
             Debug.WriteLine(text);
+            LogManager.GetLogger("MainLog").Info(text);
         }
     }
 
@@ -132,8 +156,6 @@ namespace Minesweeper.ReinforcementLearningSolver
 
         public bool Learn()
         {
-            bool verbose = false;
-
             game.ClearBoard();
             game.GenerateRandomBoard();
 
@@ -145,27 +167,14 @@ namespace Minesweeper.ReinforcementLearningSolver
                 int idx = currentAction.Y * 5 + currentAction.X; // HACK: hardcorded
                 var result = game.OpenCell(idx);
 
-                if(verbose)
-                {
-                    game.ShowBoardUser();
-                }
-
                 if(result.IsClear)
                 {
                     com.Learn(boardHashBuf, currentAction, 1);
-                    if(verbose)
-                    {
-                        Utils.Output("Clear!!!");
-                    }
                     return true;
                 }
                 else if(result.IsDead)
                 {
                     com.Learn(boardHashBuf, currentAction, -1);
-                    if(verbose)
-                    {
-                        Utils.Output("Dead...");
-                    }
                     return false;
                 }
                 else
