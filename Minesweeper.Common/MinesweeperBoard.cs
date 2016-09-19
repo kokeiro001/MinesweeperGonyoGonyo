@@ -13,13 +13,13 @@ namespace Minesweeper.Common
         public int X;
         public int Y;
 
-        public Point(int y, int x) 
+        public Point(int y, int x)
         {
             Y = y;
             X = x;
         }
     }
-    public enum CellState 
+    public enum CellState
     {
         Close,
         Open,
@@ -48,8 +48,10 @@ namespace Minesweeper.Common
     {
         private List<MinesweeperCell> cellList = new List<MinesweeperCell>();
 
-        public MinesweeperCell this [int index]{
-            get{
+        public MinesweeperCell this[int index]
+        {
+            get
+            {
                 return cellList[index];
             }
         }
@@ -63,7 +65,7 @@ namespace Minesweeper.Common
         {
             StringBuilder sb = new StringBuilder();
 
-            Func<MinesweeperCell, string> cell2Hash = c =>{
+            Func<MinesweeperCell, string> cell2Hash = c => {
                 if(c.State == CellState.Open)
                 {
                     return c.Value.ToString();
@@ -78,8 +80,8 @@ namespace Minesweeper.Common
             return sb.ToString();
         }
     }
-    
-    public class MinesweeperGame 
+
+    public class MinesweeperGame
     {
         public int Width { get; }
         public int Height { get; }
@@ -163,7 +165,7 @@ namespace Minesweeper.Common
                 return Board[y * Width + x];
             }
             return null;
-        }  
+        }
         private MinesweeperCell GetCellOrDefault(int index)
         {
             if(0 <= index && index < Board.Count())

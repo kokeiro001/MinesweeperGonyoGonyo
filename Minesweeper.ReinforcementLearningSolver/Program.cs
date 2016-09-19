@@ -14,7 +14,7 @@ namespace Minesweeper.ReinforcementLearningSolver
     {
         static void Main(string[] args)
         {
-            int learnCount = 100;
+            int learnCount = 10000;
 
             // HACK: 評価関数的な奴。適宜ローカルに保存したりして、それを復元できるようにする
             EvaluationValue value = new EvaluationValue();
@@ -196,7 +196,7 @@ namespace Minesweeper.ReinforcementLearningSolver
         static float stepSize = 0.1f;
 
         // value[boardHash][command] = reward
-        Dictionary<string, Dictionary<GameCommand, double>> valueDic = new  Dictionary<string, Dictionary<GameCommand, double>>();
+        Dictionary<string, Dictionary<GameCommand, double>> valueDic = new Dictionary<string, Dictionary<GameCommand, double>>();
 
         public GameCommand GetMaxCommand(MinesweeperBoard state)
         {
@@ -265,7 +265,8 @@ namespace Minesweeper.ReinforcementLearningSolver
         }
     }
 
-   class QLearningCom {
+    class QLearningCom
+    {
 
         static Random random = new Random();
         static double epsilon = 0.1;
