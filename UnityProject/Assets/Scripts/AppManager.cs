@@ -14,7 +14,7 @@ public class AppManager : MonoBehaviour
     private static readonly int BoardSeed = 10;
     private static readonly int BoardBombNum = 10;
 
-    private readonly MinesweeperBoard board;
+    private readonly MinesweeperGame board;
 
     private GameObject cellPrefab;
     private GameObject boardRowPrefab;
@@ -23,7 +23,7 @@ public class AppManager : MonoBehaviour
 
     public AppManager()
     {
-        board = new MinesweeperBoard(BoardWidth, BoardHeight, BoardBombNum, BoardSeed);
+        board = new MinesweeperGame(BoardWidth, BoardHeight, BoardBombNum, BoardSeed);
     }
 
     private void Awake()

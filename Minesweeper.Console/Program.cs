@@ -52,7 +52,7 @@ namespace Minesweeper.ConsoleApp
             }
         }
 
-        static MinesweeperBoard board = new MinesweeperBoard(10, 10, 10, 2);
+        static MinesweeperGame board = new MinesweeperGame(10, 10, 10, 2);
 
         static void Main(string[] args)
         {

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using MoreLinq;
 using System.Diagnostics;
+using System.Collections;
 
 namespace Minesweeper.Common
 {
@@ -43,28 +44,64 @@ namespace Minesweeper.Common
         public List<MinesweeperCell> StateChangedCells = new List<MinesweeperCell>();
     }
 
-    public class MinesweeperBoard 
+    public class MinesweeperBoard : IEnumerable<MinesweeperCell>
+    {
+        private List<MinesweeperCell> cellList = new List<MinesweeperCell>();
+
+        public MinesweeperCell this [int index]{
+            get{
+                return cellList[index];
+            }
+        }
+
+        public IEnumerator<MinesweeperCell> GetEnumerator() => cellList.GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => cellList.GetEnumerator();
+
+        public void Add(MinesweeperCell cell) => cellList.Add(cell);
+
+        public string MakeHash()
+        {
+            StringBuilder sb = new StringBuilder();
+
+            Func<MinesweeperCell, string> cell2Hash = c =>{
+                if(c.State == CellState.Open)
+                {
+                    return c.Value.ToString();
+                }
+                else
+                {
+                    return "?";
+                }
+            };
+
+            cellList.ForEach(c => sb.Append(cell2Hash));
+            return sb.ToString();
+        }
+    }
+    
+    public class MinesweeperGame 
     {
         public int Width { get; }
         public int Height { get; }
         public int BombNum { get; }
         public bool IsDead { get; private set; } = false;
-        public bool IsClear => !IsDead && board.Count(c => c.State == CellState.Open) == (Width * Height) - BombNum;
+        public bool IsClear => !IsDead && Board.Count(c => c.State == CellState.Open) == (Width * Height) - BombNum;
 
         private BoardOpenResult userControllResult = new BoardOpenResult();
 
-        private List<MinesweeperCell> board = new List<MinesweeperCell>();
+        public MinesweeperBoard Board { get; } = new MinesweeperBoard();
+        //private List<MinesweeperCell> board = new List<MinesweeperCell>();
 
         public MinesweeperCell this[int index]
         {
-            get { return board[index]; }
+            get { return Board[index]; }
         }
 
-        public MinesweeperBoard(int width, int height, int bombNum)
+        public MinesweeperGame(int width, int height, int bombNum)
             : this(width, height, bombNum, new Random().Next())
         {
         }
-        public MinesweeperBoard(int width, int height, int bombNum, int seed)
+        public MinesweeperGame(int width, int height, int bombNum, int seed)
         {
             Width = width;
             Height = height;
@@ -81,7 +118,7 @@ namespace Minesweeper.Common
 
             for(int i = 0; i < totalCellNum; i++)
             {
-                board.Add(new MinesweeperCell()
+                Board.Add(new MinesweeperCell()
                 {
                     BoardIndex = i,
                     Value = bombIndexes.Contains(i) ? -1 : 0
@@ -102,7 +139,7 @@ namespace Minesweeper.Common
             {
                 for(int x = 0; x < Width; x++)
                 {
-                    var cell = board[y * Width + x];
+                    var cell = Board[y * Width + x];
                     cell.EightLink = eightPoints
                                         .Select(p => new Point(y + p.Y, x + p.X))
                                         .Select(pos => GetCellOrDefault(pos.Y, pos.X))
@@ -124,15 +161,15 @@ namespace Minesweeper.Common
         {
             if(EnableIndex(y, x))
             {
-                return board[y * Width + x];
+                return Board[y * Width + x];
             }
             return null;
         }  
         private MinesweeperCell GetCellOrDefault(int index)
         {
-            if(0 <= index && index < board.Count)
+            if(0 <= index && index < Board.Count())
             {
-                return board[index];
+                return Board[index];
             }
             return null;
         }
@@ -154,7 +191,7 @@ namespace Minesweeper.Common
                 userControllResult = new BoardOpenResult();
             }
 
-            var cell = board[index];
+            var cell = Board[index];
             if(cell.State != CellState.Close)
             {
                 return;
@@ -192,7 +229,7 @@ namespace Minesweeper.Common
         public BoardOpenResult ToggleFlag(int index)
         {
             userControllResult = new BoardOpenResult();
-            var cell = board[index];
+            var cell = Board[index];
             if(cell.State == CellState.Close)
             {
                 cell.State = CellState.Flag;
@@ -209,7 +246,7 @@ namespace Minesweeper.Common
         {
             IsDead = true;
             // HACK: 全部開く
-            board
+            Board
                 .Where(cell => cell.State == CellState.Close)
                 .ForEach(cell => cell.State = CellState.Open);
         }
