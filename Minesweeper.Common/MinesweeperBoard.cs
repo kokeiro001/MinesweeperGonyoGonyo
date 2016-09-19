@@ -74,7 +74,7 @@ namespace Minesweeper.Common
                 }
             };
 
-            cellList.ForEach(c => sb.Append(cell2Hash));
+            cellList.ForEach(c => sb.Append(cell2Hash(c)));
             return sb.ToString();
         }
     }
