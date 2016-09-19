@@ -38,11 +38,11 @@ namespace Minesweeper.ReinforcementLearningSolver
             return value[state];
         }
 
-        public int GetMaxAction(StateClass state)
+        public ActionClass GetMaxAction(StateClass state)
         {
             // TODO
             var actions = state.ValidActions;
-            return 0;
+            return null;
         }
 
         public void Update(StateClass state, double reward, StateClass nextState)
@@ -67,7 +67,7 @@ namespace Minesweeper.ReinforcementLearningSolver
             // TODO: copy
         }
 
-        public StateClass Set(int action)
+        public StateClass Action(ActionClass action)
         {
             StateClass newState = null; // TODO: Clone
             // open board and copy 
@@ -80,20 +80,18 @@ namespace Minesweeper.ReinforcementLearningSolver
         }
 
 
-
-        public int[] ValidActions => null; // TODO: 
+        public ActionClass[] ValidActions => null; // TODO: 
     }
 
     class QLearningCom {
 
         static Random random = new Random();
-
-        static float epsilon = 0.1f;
+        static double epsilon = 0.1;
 
         ValueClass value;
         public bool learning { get; private set; }
 
-        int previousReward;
+        double previousReward;
         StateClass previousAfterState;
 
         void Initialize(ValueClass value, bool learning)
@@ -105,16 +103,16 @@ namespace Minesweeper.ReinforcementLearningSolver
             previousAfterState = null;
         }
 
-        public int SelectIndex(StateClass state)
+        public ActionClass SelectAction(StateClass state)
         {
-            int maxAction = value.GetMaxAction(state);
-            int selectedAction = maxAction;
+            var maxAction = value.GetMaxAction(state);
+            var selectedAction = maxAction;
 
 
             if(learning)
             {
                 // 推定方策（グリーディ）で直前の行動の価値を学習
-                StateClass afterState = state.Set(maxAction);
+                StateClass afterState = state.Action(maxAction);
 
                 if(previousReward != -1 && previousAfterState != null)
                 {
@@ -128,12 +126,12 @@ namespace Minesweeper.ReinforcementLearningSolver
                     int randomIndex = random.Next(state.ValidActions.Length);
                     selectedAction = state.ValidActions[randomIndex];
                 }
-                previousAfterState = state.Set(selectedAction);
+                previousAfterState = state.Action(selectedAction);
             }
             return selectedAction;
         }
 
-        public void Learn(int reward, bool finished)
+        public void Learn(double reward, bool finished)
         {
             if(learning)
             {
