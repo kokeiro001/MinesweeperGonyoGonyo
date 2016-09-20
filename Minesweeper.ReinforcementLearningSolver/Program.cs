@@ -53,23 +53,57 @@ namespace Minesweeper.ReinforcementLearningSolver
     {
         static private ILog logger = LogManager.GetLogger("MainLog");
 
-        static private int LearnCount = 1000;
+        // そのうちコンフィグに移す
+        static readonly int LearnCount = 1000;
+        static readonly string ValueVsvPath = @"value.csv";
+        static readonly bool LoadValueFile = true;
+        static readonly bool SaveValueFile = true;
+
+        static readonly int BoardWidth = 5;
+        static readonly int BoardHeight = 5;
+        static readonly int BombCount = 5;
+
+        static readonly int GameRandomSeed = 0;
+
+        static List<int> cleardCount = new List<int>();
 
         static void Main(string[] args)
         {
             LogInitializer.InitLog("MainLog");
 
-            EvaluationValue value = new EvaluationValue();
-            //value.LoadFromCsvFile("value.csv");
-            List<int> cleardCount = new List<int>();
-
-            LearningCom com = new LearningCom(value, true);
-            MinesweeperGame game = new MinesweeperGame(5, 5, 5, 0);
-            MinesweeperLearner leaner = new MinesweeperLearner(game, com, value);
-
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
+            Learn();
+            stopwatch.Stop();
 
+            logger.Info("| 要素 | 値");
+            logger.Info("------------ | -------------");
+            logger.Info($"学習回数|{LearnCount}|");
+            logger.Info($"ボードサイズ|{BoardWidth}x{BoardHeight}|");
+            logger.Info($"爆弾の数|{BombCount}|");
+            logger.Info($"総クリア回数|{cleardCount.Count}|");
+            logger.Info($"学習にかかった時間|{stopwatch.Elapsed.ToString()}|");
+
+            logger.Info($"GC.CollectionCount(0)|{GC.CollectionCount(0).ToString()}|");
+            logger.Info($"GC.CollectionCount(1)|{GC.CollectionCount(1).ToString()}|");
+            logger.Info($"GC.CollectionCount(2)|{GC.CollectionCount(2).ToString()}|");
+
+            logger.Debug("-------------------------");
+            cleardCount.ForEach(cnt => logger.Debug(cnt.ToString("D10")));
+        }
+
+        static void Learn()
+        {
+            EvaluationValue value = new EvaluationValue();
+
+            if(LoadValueFile)
+            {
+                value.LoadFromCsvFile(ValueVsvPath);
+            }
+
+            LearningCom com = new LearningCom(value, true);
+            MinesweeperGame game = new MinesweeperGame(BoardWidth, BoardHeight, BombCount, GameRandomSeed);
+            MinesweeperLearner leaner = new MinesweeperLearner(game, com, value);
 
             try
             {
@@ -86,26 +120,12 @@ namespace Minesweeper.ReinforcementLearningSolver
             {
                 logger.Error("メモリなくなったんじゃないかな(´・ω・`)", e);
             }
-            stopwatch.Stop();
 
             // save
-            value.SaveToCsvFile("value.csv");
-
-            logger.Info("| 要素 | 値");
-            logger.Info("------------ | -------------");
-            logger.Info($"学習回数|{LearnCount}|");
-            logger.Info($"ボードサイズ|5x5|");
-            logger.Info($"爆弾の数|5|");
-            logger.Info($"総クリア回数|{cleardCount.Count}|");
-            logger.Info($"学習にかかった時間|{stopwatch.Elapsed.ToString()}|");
-
-            logger.Info($"GC.CollectionCount(0)|{GC.CollectionCount(0).ToString()}|");
-            logger.Info($"GC.CollectionCount(1)|{GC.CollectionCount(1).ToString()}|");
-            logger.Info($"GC.CollectionCount(2)|{GC.CollectionCount(2).ToString()}|");
-
-            logger.Info("-------------------------");
-            cleardCount.ForEach(cnt => logger.Debug(cnt.ToString("D10")));
-            logger.Info("-------------------------");
+            if(SaveValueFile)
+            {
+                value.SaveToCsvFile(ValueVsvPath);
+            }
         }
 
         static int progress = 0;
@@ -168,7 +188,6 @@ namespace Minesweeper.ReinforcementLearningSolver
 
     }
 
-
     class MinesweeperLearner
     {
         public static ulong[] boardHashBuf = new ulong[2];
@@ -211,17 +230,16 @@ namespace Minesweeper.ReinforcementLearningSolver
                     // 状態が変わったセルの数に応じて、報酬を与える
                     if(result.StateChangedCells.Count == 1)
                     {
-                        com.Learn(boardHashBuf, currentAction, 0.05);
+                        com.Learn(boardHashBuf, currentAction, 0.5);
                     }
                     else
                     {
-                        com.Learn(boardHashBuf, currentAction, 0.1);
+                        com.Learn(boardHashBuf, currentAction, 1);
                     }
                 }
             }
         }
     }
-
 
     class UlongsDictionary<T>
     {
