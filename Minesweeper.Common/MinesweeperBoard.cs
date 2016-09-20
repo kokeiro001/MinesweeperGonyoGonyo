@@ -264,6 +264,7 @@ namespace Minesweeper.Common
 
         public BoardOpenResult OpenCell(int index)
         {
+            Debug.Assert(Board[index].State == CellState.Close);
             OpenCellSub(index, 0);
             userControllResult.IsClear = IsClear;
             userControllResult.IsDead = IsDead;

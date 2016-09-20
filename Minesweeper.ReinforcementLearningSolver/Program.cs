@@ -12,6 +12,7 @@ using System.IO;
 
 namespace Minesweeper.ReinforcementLearningSolver
 {
+
     static class LogInitializer
     {
         public static void InitLog(string loggerName)
@@ -34,7 +35,6 @@ namespace Minesweeper.ReinforcementLearningSolver
             {
                 Layout = layout,
             };
-
             var logger = ilogger.Logger as log4net.Repository.Hierarchy.Logger;
             logger.Level = log4net.Core.Level.All;
             logger.AddAppender(fileAppender);
@@ -49,20 +49,29 @@ namespace Minesweeper.ReinforcementLearningSolver
         }
     }
 
+    static class Config
+    {
+        public static readonly int BoardWidth = 5;
+        public static readonly int BoardHeight = 5;
+        public static readonly int BombCount = 5;
+    }
+
     static class LearningParam
     {
         // そのうちコンフィグに移す
-        public static readonly int LearnCount = 1000;
-        public static readonly int GameRandomSeed = 0;
+        public static readonly int LearnCount = 100000;
+        public static readonly int BoardRandomSeed = 0;
+        public static readonly int ComRandomSeed = 0;
         public static readonly string ValueCsvPath = @"value.csv";
-        public static readonly bool LoadValueFile = true;
+        public static readonly bool LoadValueFile = false;
         public static readonly bool SaveValueFile = true;
     }
 
     static class SolveParam
     {
-        public static readonly int SolveCount = 1000;
-        public static readonly int GameRandomSeed = 1;
+        public static readonly int SolveCount = 100;
+        public static readonly int GameRandomSeed = 11920000;
+        public static readonly int ComRandomSeed = 190100;
         public static readonly string ValueCsvPath = @"value.csv";
         public static readonly bool LoadValueFile = true;
     }
@@ -70,11 +79,6 @@ namespace Minesweeper.ReinforcementLearningSolver
     class Program
     {
         static private ILog logger = LogManager.GetLogger("MainLog");
-
-        static readonly int BoardWidth = 5;
-        static readonly int BoardHeight = 5;
-        static readonly int BombCount = 5;
-
 
         static List<int> cleardCount = new List<int>();
 
@@ -92,9 +96,11 @@ namespace Minesweeper.ReinforcementLearningSolver
             logger.Info("| 要素 | 値");
             logger.Info("------------ | -------------");
             logger.Info($"学習回数|{LearningParam.LearnCount}|");
-            logger.Info($"ボードサイズ|{BoardWidth}x{BoardHeight}|");
-            logger.Info($"爆弾の数|{BombCount}|");
-            logger.Info($"総クリア回数|{cleardCount.Count}|");
+            logger.Info($"ボードサイズ|{Config.BoardWidth}x{Config.BoardHeight}|");
+            logger.Info($"爆弾の数|{Config.BombCount}|");
+            logger.Info($"性能確認回数回数|{SolveParam.SolveCount}|");
+            logger.Info($"クリア回数|{cleardCount.Count}|");
+            logger.Info($"クリア率|{cleardCount.Count / (double)SolveParam.SolveCount}|");
             logger.Info($"学習にかかった時間|{learnStopwatch.Elapsed.ToString()}|");
 
             logger.Info($"GC.CollectionCount(0)|{GC.CollectionCount(0).ToString()}|");
@@ -102,7 +108,7 @@ namespace Minesweeper.ReinforcementLearningSolver
             logger.Info($"GC.CollectionCount(2)|{GC.CollectionCount(2).ToString()}|");
 
             logger.Debug("-------------------------");
-            cleardCount.ForEach(cnt => logger.Debug(cnt.ToString("D10")));
+            //cleardCount.ForEach(cnt => logger.Debug(cnt.ToString("D10")));
         }
 
         static void Learn()
@@ -114,18 +120,15 @@ namespace Minesweeper.ReinforcementLearningSolver
                 value.LoadFromCsvFile(LearningParam.ValueCsvPath);
             }
 
-            LearningCom com = new LearningCom(value, true);
-            MinesweeperGame game = new MinesweeperGame(BoardWidth, BoardHeight, BombCount, LearningParam.GameRandomSeed);
+            LearningCom com = new LearningCom(value, true, LearningParam.ComRandomSeed);
+            MinesweeperGame game = new MinesweeperGame(Config.BoardWidth, Config.BoardHeight, Config.BombCount, LearningParam.BoardRandomSeed);
             MinesweeperLearner leaner = new MinesweeperLearner(game, com, value);
 
             try
             {
                 for(int i = 0; i < LearningParam.LearnCount; i++)
                 {
-                    if(leaner.Learn())
-                    {
-                        cleardCount.Add(i);
-                    }
+                    leaner.Learn();
                     LearningProgressView(i);
                 }
             }
@@ -149,15 +152,32 @@ namespace Minesweeper.ReinforcementLearningSolver
                 value.LoadFromCsvFile(SolveParam.ValueCsvPath);
             }
 
-            LearningCom com = new LearningCom(value, false);
-            MinesweeperGame game = new MinesweeperGame(BoardWidth, BoardHeight, BombCount, SolveParam.GameRandomSeed);
-            MinesweeperLearner leaner = new MinesweeperLearner(game, com, value);
+            LearningCom com = new LearningCom(value, false, SolveParam.ComRandomSeed);
+            MinesweeperGame game = new MinesweeperGame(Config.BoardWidth, Config.BoardHeight, Config.BombCount, SolveParam.GameRandomSeed);
 
+            ulong[] boardHashBuf = new ulong[2];
             for(int i = 0; i < SolveParam.SolveCount; i++)
             {
-                if(leaner.Learn())
+                game.ClearBoard();
+                game.GenerateRandomBoard();
+
+                while(true)
                 {
-                    cleardCount.Add(i);
+                    var currentAction = com.SelectCommand(game.Board);
+
+                    game.Board.MakeHash(boardHashBuf);
+                    int idx = currentAction.Y * Config.BoardWidth + currentAction.X;
+                    var result = game.OpenCell(idx);
+
+                    if(result.IsClear)
+                    {
+                        cleardCount.Add(i);
+                        break;
+                    }
+                    else if(result.IsDead)
+                    {
+                        break;
+                    }
                 }
             }
             return cleardCount.Count;
@@ -181,7 +201,7 @@ namespace Minesweeper.ReinforcementLearningSolver
         {
             return board
                     .Where(c => c.State == CellState.Close)
-                    .Select(c => new GameCommand(c.BoardIndex / 5, c.BoardIndex % 5, GameCommandType.Open)) // HACK: hardcorded
+                    .Select(c => new GameCommand(c.BoardIndex / Config.BoardWidth, c.BoardIndex % Config.BoardWidth, GameCommandType.Open))
                     .ToArray();
         }
 
@@ -247,7 +267,7 @@ namespace Minesweeper.ReinforcementLearningSolver
                 var currentAction = com.SelectCommand(game.Board);
 
                 game.Board.MakeHash(boardHashBuf);
-                int idx = currentAction.Y * 5 + currentAction.X; // HACK: hardcorded
+                int idx = currentAction.Y * Config.BoardWidth + currentAction.X;
                 var result = game.OpenCell(idx);
 
                 if(result.IsClear)
@@ -324,10 +344,9 @@ namespace Minesweeper.ReinforcementLearningSolver
     class EvaluationValue
     {
         static float stepSize = 0.1f;
+        static ulong[] boardHashBuf = new ulong[2];
 
         UlongsDictionary<Dictionary<GameCommand, double>> valueDic = new UlongsDictionary<Dictionary<GameCommand, double>>();
-
-        static ulong[] boardHashBuf = new ulong[2];
 
         public GameCommand GetMaxCommand(MinesweeperBoard board)
         {
@@ -376,7 +395,7 @@ namespace Minesweeper.ReinforcementLearningSolver
                     {
                         GameCommand command = commandValuePair.Key;
                         double value = commandValuePair.Value;
-                        csvWriter.WriteLine($"{boardHash[0]},{boardHash[1]},{commandValuePair.Key.X},{commandValuePair.Key.Y},{commandValuePair.Value}");
+                        csvWriter.WriteLine($"{boardHash[0]},{boardHash[1]},{commandValuePair.Key.Y},{commandValuePair.Key.X},{commandValuePair.Value}");
                     }
                 }
             }
@@ -384,6 +403,8 @@ namespace Minesweeper.ReinforcementLearningSolver
 
         public void LoadFromCsvFile(string filePath)
         {
+            valueDic = new UlongsDictionary<Dictionary<GameCommand, double>>();
+
             using(StreamReader csvReader = new StreamReader(filePath))
             {
                 while(!csvReader.EndOfStream)
@@ -411,16 +432,16 @@ namespace Minesweeper.ReinforcementLearningSolver
 
     class LearningCom
     {
-        static Random random = new Random(0);
         static double epsilon = 0.1;
-
+        Random random;
         EvaluationValue value;
         public bool learning { get; private set; }
 
-        public LearningCom(EvaluationValue value, bool learning)
+        public LearningCom(EvaluationValue value, bool learning, int randomSeed)
         {
             this.value = value;
             this.learning = learning;
+            random = new Random(randomSeed);
         }
 
         public GameCommand SelectCommand(MinesweeperBoard state)
@@ -428,15 +449,14 @@ namespace Minesweeper.ReinforcementLearningSolver
             var maxCommand = value.GetMaxCommand(state);
             var selectedCommand = maxCommand;
 
-            if(learning)
+            // 挙動方策（ε-グリーディ）で行動を決定
+            if(selectedCommand == null || (learning && random.NextDouble() < epsilon))
             {
-                // 挙動方策（ε-グリーディ）で行動を決定
-                if(selectedCommand == null || random.NextDouble() < epsilon)
-                {
-                    int randomIndex = random.Next(state.ValidCommands().Length);
-                    selectedCommand = state.ValidCommands()[randomIndex];
-                }
+                var validCommands = state.ValidCommands();
+                int randomIndex = random.Next(validCommands.Length);
+                selectedCommand = validCommands[randomIndex];
             }
+
             return selectedCommand;
         }
 
