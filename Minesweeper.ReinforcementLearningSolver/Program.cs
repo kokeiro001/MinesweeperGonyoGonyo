@@ -62,7 +62,7 @@ namespace Minesweeper.ReinforcementLearningSolver
             //value.Deserialize(XDocument.Load("value.xml"));
             List<int> cleardCount = new List<int>();
 
-            QLearningCom com = new QLearningCom(value, true);
+            LearningCom com = new LearningCom(value, true);
             MinesweeperGame game = new MinesweeperGame(5, 5, 5, 0);
             MinesweeperLearner leaner = new MinesweeperLearner(game, com, value);
 
@@ -173,10 +173,10 @@ namespace Minesweeper.ReinforcementLearningSolver
     {
         public static ulong[] boardHashBuf = new ulong[2];
         EvaluationValue value;
-        QLearningCom com;
+        LearningCom com;
         MinesweeperGame game;
 
-        public MinesweeperLearner(MinesweeperGame game, QLearningCom com, EvaluationValue value)
+        public MinesweeperLearner(MinesweeperGame game, LearningCom com, EvaluationValue value)
         {
             this.value = value;
             this.game = game;
@@ -355,7 +355,7 @@ namespace Minesweeper.ReinforcementLearningSolver
         }
     }
 
-    class QLearningCom
+    class LearningCom
     {
         static Random random = new Random(0);
         static double epsilon = 0.1;
@@ -363,7 +363,7 @@ namespace Minesweeper.ReinforcementLearningSolver
         EvaluationValue value;
         public bool learning { get; private set; }
 
-        public QLearningCom(EvaluationValue value, bool learning)
+        public LearningCom(EvaluationValue value, bool learning)
         {
             this.value = value;
             this.learning = learning;
