@@ -49,21 +49,32 @@ namespace Minesweeper.ReinforcementLearningSolver
         }
     }
 
+    static class LearningParam
+    {
+        // そのうちコンフィグに移す
+        public static readonly int LearnCount = 1000;
+        public static readonly int GameRandomSeed = 0;
+        public static readonly string ValueCsvPath = @"value.csv";
+        public static readonly bool LoadValueFile = true;
+        public static readonly bool SaveValueFile = true;
+    }
+
+    static class SolveParam
+    {
+        public static readonly int SolveCount = 1000;
+        public static readonly int GameRandomSeed = 1;
+        public static readonly string ValueCsvPath = @"value.csv";
+        public static readonly bool LoadValueFile = true;
+    }
+
     class Program
     {
         static private ILog logger = LogManager.GetLogger("MainLog");
-
-        // そのうちコンフィグに移す
-        static readonly int LearnCount = 1000;
-        static readonly string ValueVsvPath = @"value.csv";
-        static readonly bool LoadValueFile = true;
-        static readonly bool SaveValueFile = true;
 
         static readonly int BoardWidth = 5;
         static readonly int BoardHeight = 5;
         static readonly int BombCount = 5;
 
-        static readonly int GameRandomSeed = 0;
 
         static List<int> cleardCount = new List<int>();
 
@@ -71,18 +82,20 @@ namespace Minesweeper.ReinforcementLearningSolver
         {
             LogInitializer.InitLog("MainLog");
 
-            Stopwatch stopwatch = new Stopwatch();
-            stopwatch.Start();
+            Stopwatch learnStopwatch = new Stopwatch();
+            learnStopwatch.Start();
             Learn();
-            stopwatch.Stop();
+            learnStopwatch.Stop();
+
+            int clearCount = Solve();
 
             logger.Info("| 要素 | 値");
             logger.Info("------------ | -------------");
-            logger.Info($"学習回数|{LearnCount}|");
+            logger.Info($"学習回数|{LearningParam.LearnCount}|");
             logger.Info($"ボードサイズ|{BoardWidth}x{BoardHeight}|");
             logger.Info($"爆弾の数|{BombCount}|");
             logger.Info($"総クリア回数|{cleardCount.Count}|");
-            logger.Info($"学習にかかった時間|{stopwatch.Elapsed.ToString()}|");
+            logger.Info($"学習にかかった時間|{learnStopwatch.Elapsed.ToString()}|");
 
             logger.Info($"GC.CollectionCount(0)|{GC.CollectionCount(0).ToString()}|");
             logger.Info($"GC.CollectionCount(1)|{GC.CollectionCount(1).ToString()}|");
@@ -96,24 +109,24 @@ namespace Minesweeper.ReinforcementLearningSolver
         {
             EvaluationValue value = new EvaluationValue();
 
-            if(LoadValueFile)
+            if(LearningParam.LoadValueFile)
             {
-                value.LoadFromCsvFile(ValueVsvPath);
+                value.LoadFromCsvFile(LearningParam.ValueCsvPath);
             }
 
             LearningCom com = new LearningCom(value, true);
-            MinesweeperGame game = new MinesweeperGame(BoardWidth, BoardHeight, BombCount, GameRandomSeed);
+            MinesweeperGame game = new MinesweeperGame(BoardWidth, BoardHeight, BombCount, LearningParam.GameRandomSeed);
             MinesweeperLearner leaner = new MinesweeperLearner(game, com, value);
 
             try
             {
-                for(int i = 0; i < LearnCount; i++)
+                for(int i = 0; i < LearningParam.LearnCount; i++)
                 {
                     if(leaner.Learn())
                     {
                         cleardCount.Add(i);
                     }
-                    ProgressView(i);
+                    LearningProgressView(i);
                 }
             }
             catch(Exception e)
@@ -122,16 +135,38 @@ namespace Minesweeper.ReinforcementLearningSolver
             }
 
             // save
-            if(SaveValueFile)
+            if(LearningParam.SaveValueFile)
             {
-                value.SaveToCsvFile(ValueVsvPath);
+                value.SaveToCsvFile(LearningParam.ValueCsvPath);
             }
         }
 
-        static int progress = 0;
-        static void ProgressView(int currentLeanCount)
+        static int Solve()
         {
-            float per = ((float)currentLeanCount / LearnCount) * 100f;
+            EvaluationValue value = new EvaluationValue();
+            if(SolveParam.LoadValueFile)
+            {
+                value.LoadFromCsvFile(SolveParam.ValueCsvPath);
+            }
+
+            LearningCom com = new LearningCom(value, false);
+            MinesweeperGame game = new MinesweeperGame(BoardWidth, BoardHeight, BombCount, SolveParam.GameRandomSeed);
+            MinesweeperLearner leaner = new MinesweeperLearner(game, com, value);
+
+            for(int i = 0; i < SolveParam.SolveCount; i++)
+            {
+                if(leaner.Learn())
+                {
+                    cleardCount.Add(i);
+                }
+            }
+            return cleardCount.Count;
+        }
+
+        static int progress = 0;
+        static void LearningProgressView(int currentLeanCount)
+        {
+            float per = ((float)currentLeanCount / LearningParam.LearnCount) * 100f;
             if(per >= progress)
             {
                 progress += 1;
