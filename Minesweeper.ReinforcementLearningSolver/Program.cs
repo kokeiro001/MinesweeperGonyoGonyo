@@ -83,7 +83,7 @@ namespace Minesweeper.ReinforcementLearningSolver
             if(per >= learningProgress)
             {
                 learningProgress += 1;
-                logger.Debug($"Progress={learningProgress}%");
+                logger.Debug($"Progress={learningProgress}%, LearnCount={currentLeanCount}");
             }
         }
 
