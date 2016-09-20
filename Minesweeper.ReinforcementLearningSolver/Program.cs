@@ -8,6 +8,7 @@ using System.Diagnostics;
 using MoreLinq;
 using System.Xml.Linq;
 using log4net;
+using System.IO;
 
 namespace Minesweeper.ReinforcementLearningSolver
 {
@@ -52,14 +53,14 @@ namespace Minesweeper.ReinforcementLearningSolver
     {
         static private ILog logger = LogManager.GetLogger("MainLog");
 
-        static private int LearnCount = 10000000;
+        static private int LearnCount = 1000;
 
         static void Main(string[] args)
         {
             LogInitializer.InitLog("MainLog");
 
             EvaluationValue value = new EvaluationValue();
-            //value.Deserialize(XDocument.Load("value.xml"));
+            //value.LoadFromCsvFile("value.csv");
             List<int> cleardCount = new List<int>();
 
             LearningCom com = new LearningCom(value, true);
@@ -88,8 +89,7 @@ namespace Minesweeper.ReinforcementLearningSolver
             stopwatch.Stop();
 
             // save
-            var xdoc = value.Serialize();
-            xdoc.Save("value.xml", SaveOptions.None);
+            value.SaveToCsvFile("value.csv");
 
             logger.Info("| 要素 | 値");
             logger.Info("------------ | -------------");
@@ -310,45 +310,46 @@ namespace Minesweeper.ReinforcementLearningSolver
             valueDic.Get(boardHashBuf)[command] += stepSize * (reward - valueDic.Get(boardHashBuf)[command]);
         }
 
-        public XDocument Serialize()
+        public void SaveToCsvFile(string filePath)
         {
-            XDocument xdoc = new XDocument();
-            XElement root = new XElement("root");
-            xdoc.Add(root);
-            foreach(var key in valueDic.CalculateKeys())
+            using(StreamWriter csvWriter = new StreamWriter(filePath))
             {
-                XElement boardHashElem = new XElement("boardHash",
-                        new XAttribute("hash0", key[0]),
-                        new XAttribute("hash1", key[1]));
-                foreach(var value in valueDic.Get(key))
+                foreach(var boardHash in valueDic.CalculateKeys())
                 {
-                    boardHashElem.Add(new XElement($"command",
-                        new XAttribute("X", value.Key.X),
-                        new XAttribute("Y", value.Key.Y),
-                        new XAttribute("value", value.Value)));
+                    ulong hash0 = boardHash[0];
+                    ulong hash1 = boardHash[1];
+
+                    foreach(var commandValuePair in valueDic.Get(boardHash))
+                    {
+                        GameCommand command = commandValuePair.Key;
+                        double value = commandValuePair.Value;
+                        csvWriter.WriteLine($"{boardHash[0]},{boardHash[1]},{commandValuePair.Key.X},{commandValuePair.Key.Y},{commandValuePair.Value}");
+                    }
                 }
-                root.Add(boardHashElem);
             }
-            return xdoc;
         }
 
-        public void Deserialize(XDocument xdoc)
+        public void LoadFromCsvFile(string filePath)
         {
-            XElement root = xdoc.Element("root");
-            foreach(var boardHashElem in root.Elements("boardHash"))
+            using(StreamReader csvReader = new StreamReader(filePath))
             {
-                boardHashBuf[0] = ulong.Parse(boardHashElem.Attribute("hash0").Value);
-                boardHashBuf[1] = ulong.Parse(boardHashElem.Attribute("hash1").Value);
-                
-                valueDic.Add(boardHashBuf, new Dictionary<GameCommand, double>());
-
-                foreach(var commandElem in boardHashElem.Elements("command"))
+                while(!csvReader.EndOfStream)
                 {
+                    var values = csvReader.ReadLine().Split(',');
+
+                    boardHashBuf[0] = ulong.Parse(values[0]);
+                    boardHashBuf[1] = ulong.Parse(values[1]);
+
+                    if(!valueDic.ContainsKey(boardHashBuf))
+                    {
+                        valueDic.Add(boardHashBuf, new Dictionary<GameCommand, double>());
+                    }
+
                     var command = new GameCommand(
-                        int.Parse(commandElem.Attribute("Y").Value),
-                        int.Parse(commandElem.Attribute("X").Value),
+                        int.Parse(values[2]),
+                        int.Parse(values[3]),
                         GameCommandType.Open);
-                    double value = double.Parse(commandElem.Attribute("value").Value);
+                    double value = double.Parse(values[4]);
                     valueDic.Get(boardHashBuf).Add(command, value);
                 }
             }
