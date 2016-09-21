@@ -4,18 +4,20 @@ namespace Minesweeper.ReinforcementLearningSolver
 {
     static class LogInitializer
     {
-        public static void InitLog(string loggerName)
+        public static void InitLog(string loggerName, string outputLogFileName)
         {
             var ilogger = LogManager.GetLogger(loggerName);
 
             var layout = new log4net.Layout.PatternLayout(@"%-5level %date{yyyy/MM/dd_HH:mm:ss,fff} [%thread] %logger - %message%newline");
-
+            
             var fileAppender = new log4net.Appender.FileAppender()
             {
                 Layout = layout,
-                File = $"{loggerName}.txt",
+                File = outputLogFileName,
                 AppendToFile = true,
+                
             };
+            
             var consoleAppender = new log4net.Appender.ConsoleAppender()
             {
                 Layout = layout,
@@ -29,7 +31,7 @@ namespace Minesweeper.ReinforcementLearningSolver
             logger.AddAppender(fileAppender);
             logger.AddAppender(consoleAppender);
             logger.AddAppender(debugAppender);
-
+            
             logger.Repository.Configured = true;
 
             fileAppender.ActivateOptions();

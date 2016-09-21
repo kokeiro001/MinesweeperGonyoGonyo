@@ -16,7 +16,7 @@ namespace Minesweeper.ReinforcementLearningSolver
 
         static void Main(string[] args)
         {
-            LogInitializer.InitLog("MainLog");
+            LogInitializer.InitLog("MainLog", LearningParam.LogPath);
 
             Stopwatch learnStopwatch = new Stopwatch();
             learnStopwatch.Start();
