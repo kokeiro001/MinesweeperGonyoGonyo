@@ -331,7 +331,6 @@ namespace Minesweeper.Common
         public void Dead()
         {
             IsDead = true;
-            // HACK: 全部開く
             Board
                 .Where(cell => cell.State == CellState.Close)
                 .ForEach(cell => cell.State = CellState.Open);
@@ -340,7 +339,6 @@ namespace Minesweeper.Common
         public void ClearBoard()
         {
             IsDead = false;
-            // TODO: 
         }
 
         public void GenerateRandomBoard()
