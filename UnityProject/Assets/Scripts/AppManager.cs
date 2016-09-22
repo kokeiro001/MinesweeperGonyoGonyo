@@ -24,6 +24,7 @@ public class AppManager : MonoBehaviour
     public AppManager()
     {
         board = new MinesweeperGame(BoardWidth, BoardHeight, BoardBombNum, BoardSeed);
+        board.GenerateRandomBoard();
     }
 
     private void Awake()
