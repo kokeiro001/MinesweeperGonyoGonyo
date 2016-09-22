@@ -144,7 +144,7 @@ namespace Minesweeper.ReinforcementLearningSolver
                 value.LoadFromCsvFile(learningParam.ValueCsvPath);
             }
 
-            LearningCom com = new LearningCom(value, true, learningParam.ComRandomSeed, learningParam.Epsilon);
+            MinesweeperCom com = new MinesweeperCom(value, true, learningParam.ComRandomSeed, learningParam.Epsilon);
             MinesweeperGame game = new MinesweeperGame(
                 learningParam.BoardConfig.BoardWidth, 
                 learningParam.BoardConfig.BoardHeight, 
@@ -192,7 +192,7 @@ namespace Minesweeper.ReinforcementLearningSolver
                 value.LoadFromCsvFile(solveParam.ValueCsvPath);
             }
 
-            LearningCom com = new LearningCom(value, false, solveParam.ComRandomSeed, solveParam.Epsilon);
+            MinesweeperCom com = new MinesweeperCom(value, false, solveParam.ComRandomSeed, solveParam.Epsilon);
             MinesweeperGame game = new MinesweeperGame(
                 solveParam.BoardConfig.BoardWidth, 
                 solveParam.BoardConfig.BoardHeight,

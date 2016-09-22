@@ -9,10 +9,10 @@ namespace Minesweeper.ReinforcementLearningSolver
     {
         public ulong[] boardHashBuf = new ulong[2];
         EvaluationValue value;
-        LearningCom com;
+        MinesweeperCom com;
         MinesweeperGame game;
 
-        public MinesweeperLearner(MinesweeperGame game, LearningCom com, EvaluationValue value)
+        public MinesweeperLearner(MinesweeperGame game, MinesweeperCom com, EvaluationValue value)
         {
             this.value = value;
             this.game = game;
@@ -160,14 +160,14 @@ namespace Minesweeper.ReinforcementLearningSolver
         }
     }
 
-    class LearningCom
+    class MinesweeperCom
     {
         double epsilon = 0.1;
         Random random;
         EvaluationValue value;
         public bool learning { get; private set; }
 
-        public LearningCom(EvaluationValue value, bool learning, int randomSeed, double epsilon)
+        public MinesweeperCom(EvaluationValue value, bool learning, int randomSeed, double epsilon)
         {
             this.value = value;
             this.learning = learning;
