@@ -12,9 +12,24 @@ namespace Minesweeper.ReinforcementLearningSolver
     {
         [PrimaryKey, AutoIncrement]
         public int Id { get; set; }
-        public int LearnCount { get; set; }
 
+        public string AlgorithmVersion { get; set; }
+        public DateTime CreatedAt { get; set; }
+
+        // Board
+        public int BoardWidth { get; set; }
+        public int BoardHeight { get; set; }
+        public int BombCount { get; set; }
+
+        // Learn
+        public int LearnCount { get; set; }
+        public TimeSpan LearnTime { get; set; }
+        public float LearnStepSize { get; set; }
+        public float LearnEpsilion { get; set; }
+
+        // Solve
         public int SolveTrialCount { get; set; }
-        public int SolvedCount { get; set; }
+        public int SolvedCountUnuseLearningData { get; set; }
+        public int SolvedCountUseLearningData { get; set; }
     }
 }
