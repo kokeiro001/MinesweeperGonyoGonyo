@@ -11,12 +11,14 @@ namespace Minesweeper.ReinforcementLearningSolver
         EvaluationValue value;
         MinesweeperCom com;
         MinesweeperGame game;
+        LearningParam learningParam;
 
-        public MinesweeperLearner(MinesweeperGame game, MinesweeperCom com, EvaluationValue value)
+        public MinesweeperLearner(MinesweeperGame game, MinesweeperCom com, EvaluationValue value, LearningParam learningParam)
         {
             this.value = value;
             this.game = game;
             this.com = com;
+            this.learningParam = learningParam;
         }
 
         public bool Learn()
@@ -37,17 +39,17 @@ namespace Minesweeper.ReinforcementLearningSolver
                     // 状態が変わったセルの数に応じて、報酬を与える
                     if(result.StateChangedCells.Count == 1)
                     {
-                        value.Update(boardHashBuf, currentAction, 0.1);
+                        value.Update(boardHashBuf, currentAction, learningParam.RewardOpenOneCell);
                     }
                     else
                     {
-                        value.Update(boardHashBuf, currentAction, 0.2);
+                        value.Update(boardHashBuf, currentAction, learningParam.RewardOpenMultiCell);
                     }
                     return true;
                 }
                 else if(result.IsDead)
                 {
-                    value.Update(boardHashBuf, currentAction, 0.2);
+                    value.Update(boardHashBuf, currentAction, learningParam.RewardDead);
                     return false;
                 }
                 else
@@ -55,11 +57,11 @@ namespace Minesweeper.ReinforcementLearningSolver
                     // 状態が変わったセルの数に応じて、報酬を与える
                     if(result.StateChangedCells.Count == 1)
                     {
-                        value.Update(boardHashBuf, currentAction, 0.1);
+                        value.Update(boardHashBuf, currentAction, learningParam.RewardOpenOneCell);
                     }
                     else
                     {
-                        value.Update(boardHashBuf, currentAction, 0.2);
+                        value.Update(boardHashBuf, currentAction, learningParam.RewardOpenMultiCell);
                     }
                 }
             }
@@ -158,6 +160,7 @@ namespace Minesweeper.ReinforcementLearningSolver
                 }
             }
         }
+
     }
 
     class MinesweeperCom

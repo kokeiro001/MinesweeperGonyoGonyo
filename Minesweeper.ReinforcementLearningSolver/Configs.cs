@@ -29,16 +29,30 @@ namespace Minesweeper.ReinforcementLearningSolver
         public readonly float LearnStepSize;
         public readonly float Epsilon;
 
+        public readonly float RewardOpenOneCell;
+        public readonly float RewardOpenMultiCell;
+        public readonly float RewardDead;
+
         public readonly string LogPath;
         public readonly string ValueCsvPath;
 
 
-        public LearningParam(BoardConfig baordConfig, int learnCount, float learnStepSize, float epsilon)
+        public LearningParam(
+            BoardConfig baordConfig, 
+            int learnCount, 
+            float learnStepSize, 
+            float epsilon,
+            float rewardOpenOneCell,
+            float rewardOpenMultiCell,
+            float rewardDead)
         {
             BoardConfig = baordConfig;
             LearnCount = learnCount;
             LearnStepSize = learnStepSize;
             Epsilon = epsilon;
+            RewardOpenOneCell = rewardDead;
+            RewardOpenMultiCell = rewardOpenMultiCell;
+            RewardDead = rewardDead;
 
             LogPath =  $"LearningResults/{baordConfig.BoardHeight}x{baordConfig.BoardWidth}_b{baordConfig.BombCount}_{LearnCount}_s{learnStepSize * 100}_e{epsilon * 100}_{DateTime.Now.ToString(@"yyyy_MMdd_HHmmss")}_log.txt";
             ValueCsvPath = $"LearningResults/{baordConfig.BoardHeight}x{baordConfig.BoardWidth}_b{baordConfig.BombCount}_{LearnCount}_s{learnStepSize * 100}_e{epsilon * 100}_{DateTime.Now.ToString(@"yyyy_MMdd_HHmmss")}.csv";
