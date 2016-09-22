@@ -5,6 +5,7 @@ using System.Text;
 using Minesweeper.Common;
 using System.Diagnostics;
 using log4net;
+using SQLite;
 
 namespace Minesweeper.ReinforcementLearningSolver
 {
@@ -24,6 +25,7 @@ namespace Minesweeper.ReinforcementLearningSolver
             public int BombCount;
         }
 
+
         static void Main(string[] args)
         {
 
@@ -34,19 +36,14 @@ namespace Minesweeper.ReinforcementLearningSolver
             var epsilons = new float[] { 0.01f, 0.05f, 0.1f, 0.15f, 0.2f };
             var widths = new int[] { 3, 4, 5 };
             var heights = new int[] { 3, 4, 5 };
-            var bombCounts = new int[] { 2, 3, 4, 5, 6};
+            var bombCounts = new int[] { 2, 3, 4, 5, 6 };
 
             List<Param> paramList = new List<Param>();
             foreach(var learnCount in learnCounts)
-            {
                 foreach(var step in learnSteps)
-                {
                     foreach(var epsilon in epsilons)
-                    {
                         foreach(var w in widths)
-                        {
                             foreach(var h in heights)
-                            {
                                 foreach(var b in bombCounts)
                                 {
                                     paramList.Add(new Param()
@@ -58,13 +55,9 @@ namespace Minesweeper.ReinforcementLearningSolver
                                         Height = h,
                                         BombCount = b
                                     });
+                                    goto PARAM_CREATED;
                                 }
-                            }
-                        }
-                    }
-                }
-            }
-
+            PARAM_CREATED:
 
             for(int i = 0; i < paramList.Count; i++)
             {
