@@ -82,6 +82,11 @@ namespace Minesweeper.ReinforcementLearningSolver
 
         public GameCommand GetMaxCommand(MinesweeperBoard board)
         {
+            // HACK: 未知の値があるかどうかを考慮すべき。
+            // 現在は、期待値が０以上のコマンドを返却している。
+            // すべて探索済みで、全部マイナスの場合、一番軽症で済みそうなやつを返却すべき。
+            // 未知の場合は、とりあえず期待値を０にする。
+
             board.MakeHash(boardHashBuf);
             if(!valueDic.ContainsKey(boardHashBuf))
             {

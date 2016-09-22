@@ -36,7 +36,6 @@ namespace Minesweeper.ReinforcementLearningSolver
         public readonly string LogPath;
         public readonly string ValueCsvPath;
 
-
         public LearningParam(
             BoardConfig baordConfig, 
             int learnCount, 
@@ -50,7 +49,7 @@ namespace Minesweeper.ReinforcementLearningSolver
             LearnCount = learnCount;
             LearnStepSize = learnStepSize;
             Epsilon = epsilon;
-            RewardOpenOneCell = rewardDead;
+            RewardOpenOneCell = rewardOpenOneCell;
             RewardOpenMultiCell = rewardOpenMultiCell;
             RewardDead = rewardDead;
 

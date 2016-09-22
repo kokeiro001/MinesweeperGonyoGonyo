@@ -14,19 +14,6 @@ namespace Minesweeper.ReinforcementLearningSolver
         static private ILog logger = LogManager.GetLogger("MainLog");
         private static SQLiteConnection db;
 
-        class Param
-        {
-            public int LearnCount;
-            public float LearnStep;
-            public float Epsilon;
-            public int Width;
-            public int Height;
-            public int BombCount;
-            public float RewardOpenOneCell;
-            public float RewardOpenMultiCell;
-            public float RewardDead;
-        }
-
         static void Main(string[] args)
         {
             db = new SQLiteConnection("learnResults.sqlite3");
@@ -44,43 +31,34 @@ namespace Minesweeper.ReinforcementLearningSolver
             var rewardMultiCells = new float[] { 0.05f, 0.1f, 0.2f, 0.5f, 2f };
             var rewardDeads = new float[] { -0.1f, -0.2f, -0.5f, -1f, -2f};
 
-            List<Param> paramList = new List<Param>();
-            foreach(var learnCount in learnCounts)
-                foreach(var step in learnSteps)
-                    foreach(var epsilon in epsilons)
-                        foreach(var rewardOneCell in rewardOneCells)
-                            foreach(var rewardMultiCell in rewardMultiCells)
-                                foreach(var rewardDead in rewardDeads)
-                                    foreach(var w in widths)
-                                        foreach(var h in heights)
-                                            foreach(var b in bombCounts)
+            List<LearningParam> paramList = new List<LearningParam>();
+            foreach(var w in widths)
+                foreach(var h in heights)
+                    foreach(var b in bombCounts)
+                    {
+                        BoardConfig boardConfig = new BoardConfig(w, h, b);
+
+                        foreach(var learnCount in learnCounts)
+                            foreach(var step in learnSteps)
+                                foreach(var epsilon in epsilons)
+                                    foreach(var rewardOneCell in rewardOneCells)
+                                        foreach(var rewardMultiCell in rewardMultiCells)
+                                            foreach(var rewardDead in rewardDeads)
                                             {
-                                                paramList.Add(new Param()
-                                                {
-                                                    LearnCount = learnCount,
-                                                    LearnStep = step,
-                                                    Epsilon = epsilon,
-                                                    Width = w,
-                                                    Height = h,
-                                                    BombCount = b,
-                                                    RewardOpenOneCell = rewardOneCell,
-                                                    RewardOpenMultiCell = rewardMultiCell,
-                                                    RewardDead = rewardDead
-                                                });
+                                                paramList.Add(new LearningParam(
+                                                    boardConfig,
+                                                    learnCount,
+                                                    step,
+                                                    epsilon,
+                                                    rewardOneCell,
+                                                    rewardMultiCell,
+                                                    rewardDead));
                                             }
+                    }
 
             for(int i = 0; i < paramList.Count; i++)
             {
-                Param param = paramList[i];
-                BoardConfig boardConfig = new BoardConfig(param.Width, param.Height, param.BombCount);
-                LearningParam learningParam = new LearningParam(
-                    boardConfig, 
-                    param.LearnCount, 
-                    param.LearnStep, 
-                    param.Epsilon,
-                    param.RewardOpenOneCell,
-                    param.RewardOpenMultiCell,
-                    param.RewardDead);
+                var learningParam = paramList[i];
                 LogInitializer.InitLog("MainLog", learningParam.LogPath);
 
                 Stopwatch learnStopwatch = new Stopwatch();
@@ -89,14 +67,14 @@ namespace Minesweeper.ReinforcementLearningSolver
                 learnStopwatch.Stop();
 
                 // 学習結果を用いないで
-                SolveParam solveParamUnuseLearningData = new SolveParam(boardConfig, SolveTrialCount, "", param.Epsilon);
+                SolveParam solveParamUnuseLearningData = new SolveParam(learningParam.BoardConfig, SolveTrialCount, "", 0);
                 int solvedCountUnuseLearningData = Solve(solveParamUnuseLearningData);
 
                 // 学習結果を用いて
-                SolveParam solveParamUseLearningData = new SolveParam(boardConfig, SolveTrialCount, learningParam.ValueCsvPath, param.Epsilon);
+                SolveParam solveParamUseLearningData = new SolveParam(learningParam.BoardConfig, SolveTrialCount, learningParam.ValueCsvPath, learningParam.Epsilon);
                 int solvedCountUseLearningData = Solve(solveParamUseLearningData);
 
-                WriteLog(boardConfig, learningParam, learnStopwatch, SolveTrialCount, solvedCountUnuseLearningData, solvedCountUseLearningData);
+                WriteLog(learningParam.BoardConfig, learningParam, learnStopwatch, SolveTrialCount, solvedCountUnuseLearningData, solvedCountUseLearningData);
 
                 Console.WriteLine($"{i}/{paramList.Count}");
             }
@@ -142,9 +120,12 @@ namespace Minesweeper.ReinforcementLearningSolver
 
                 // Learn
                 LearnCount = learningParam.LearnCount,
-                LearnTime = learnStopwatch.Elapsed,
+                LearnSeconds = (uint)learnStopwatch.Elapsed.TotalSeconds,
                 LearnStepSize = learningParam.LearnStepSize,
                 LearnEpsilion = learningParam.Epsilon,
+                RewardOpenOneCell = learningParam.RewardOpenOneCell,
+                RewardOpenMultiCell = learningParam.RewardOpenMultiCell,
+                RewardDead = learningParam.RewardDead,
 
                 // Solve
                 SolveTrialCount = solveTrialCount,

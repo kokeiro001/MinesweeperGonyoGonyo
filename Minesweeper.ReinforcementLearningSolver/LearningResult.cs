@@ -23,9 +23,12 @@ namespace Minesweeper.ReinforcementLearningSolver
 
         // Learn
         public int LearnCount { get; set; }
-        public TimeSpan LearnTime { get; set; }
+        public uint LearnSeconds { get; set; }
         public float LearnStepSize { get; set; }
         public float LearnEpsilion { get; set; }
+        public float RewardOpenOneCell { get; set; }
+        public float RewardOpenMultiCell { get; set; }
+        public float RewardDead { get; set; }
 
         // Solve
         public int SolveTrialCount { get; set; }
