@@ -2,31 +2,75 @@
 
 namespace Minesweeper.ReinforcementLearningSolver
 {
-    static class Config
+    class BoardConfig
     {
-        public static readonly int BoardWidth = 5;
-        public static readonly int BoardHeight = 5;
-        public static readonly int BombCount = 5;
+        public readonly int BoardWidth;
+        public readonly int BoardHeight;
+        public readonly int BombCount;
+
+        public BoardConfig(int width, int height, int bombCount)
+        {
+            BoardWidth = width;
+            BoardHeight = height;
+            BombCount = bombCount;
+        }
     }
 
-    static class LearningParam
+    class LearningParam
     {
-        // そのうちコンフィグに移す
-        public static readonly int LearnCount = 100000;
-        public static readonly int BoardRandomSeed = 0;
-        public static readonly int ComRandomSeed = 0;
-        public static readonly string LogPath = $"LearningResults/{Config.BoardHeight}x{Config.BoardWidth}_b{Config.BombCount}_{LearnCount}_{DateTime.Now.ToString(@"yyyy_MMdd_HHmmss")}_log.txt";
-        public static readonly string ValueCsvPath = $"LearningResults/{Config.BoardHeight}x{Config.BoardWidth}_b{Config.BombCount}_{LearnCount}_{DateTime.Now.ToString(@"yyyy_MMdd_HHmmss")}.csv";
-        public static readonly bool LoadValueFile = false;
-        public static readonly bool SaveValueFile = true;
+        public int BoardRandomSeed => 0;
+        public int ComRandomSeed => 0;
+
+        public bool LoadValueFile => false;
+        public bool SaveValueFile => true;
+
+        public readonly BoardConfig BoardConfig;
+        public readonly int LearnCount;
+        public readonly float LearnStepSize;
+        public readonly float Epsilon;
+
+        public readonly string LogPath;
+        public readonly string ValueCsvPath;
+
+
+        public LearningParam(BoardConfig baordConfig, int learnCount, float learnStepSize, float epsilon)
+        {
+            BoardConfig = baordConfig;
+            LearnCount = learnCount;
+            LearnStepSize = learnStepSize;
+            Epsilon = epsilon;
+
+            LogPath =  $"LearningResults/{baordConfig.BoardHeight}x{baordConfig.BoardWidth}_b{baordConfig.BombCount}_{LearnCount}_s{learnStepSize * 100}_e{epsilon * 100}_{DateTime.Now.ToString(@"yyyy_MMdd_HHmmss")}_log.txt";
+            ValueCsvPath = $"LearningResults/{baordConfig.BoardHeight}x{baordConfig.BoardWidth}_b{baordConfig.BombCount}_{LearnCount}_s{learnStepSize * 100}_e{epsilon * 100}_{DateTime.Now.ToString(@"yyyy_MMdd_HHmmss")}.csv";
+        }
     }
 
-    static class SolveParam
+    class SolveParam
     {
-        public static readonly int SolveCount = 1000;
-        public static readonly int GameRandomSeed = 1192;
-        public static readonly int ComRandomSeed = 1901;
-        public static readonly string ValueCsvPath = LearningParam.ValueCsvPath;
-        public static readonly bool LoadValueFile = true;
+        public int GameRandomSeed => 1192;
+        public int ComRandomSeed => 1901;
+
+        public readonly int SolveCount;
+        public readonly string ValueCsvPath;
+
+        public readonly BoardConfig BoardConfig;
+        public readonly bool LoadValueFile;
+        public readonly float Epsilon;
+
+        public SolveParam(BoardConfig boardConfig, int solveCount, string valueCsvPath, float epsilion)
+        {
+            BoardConfig = boardConfig;
+            SolveCount = solveCount;
+            Epsilon = epsilion;
+            if(string.IsNullOrEmpty(valueCsvPath))
+            {
+                LoadValueFile = false;
+            }
+            else
+            {
+                LoadValueFile = true;
+                ValueCsvPath = valueCsvPath;
+            }
+        }
     }
 }

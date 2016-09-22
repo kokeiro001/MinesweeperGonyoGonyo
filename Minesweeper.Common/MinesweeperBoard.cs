@@ -97,6 +97,9 @@ namespace Minesweeper.Common
     {
         private List<MinesweeperCell> cellList = new List<MinesweeperCell>();
 
+        public int Width { get; }
+        public int Height { get; }
+
         public MinesweeperCell this[int index]
         {
             get
@@ -105,10 +108,63 @@ namespace Minesweeper.Common
             }
         }
 
+        public MinesweeperBoard(int width, int height)
+        {
+            Width = width;
+            Height = height;
+
+            for(int i = 0; i < Height * Width; i++)
+            {
+                cellList.Add(new MinesweeperCell() { BoardIndex = i });
+            }
+            var eightPoints = new Point[] {
+                    new Point (-1, -1), new Point(-1, 0), new Point(-1, 1),
+                    new Point ( 0, -1),                   new Point( 0, 1),
+                    new Point ( 1, -1), new Point( 1, 0), new Point( 1, 1),
+                };
+
+            var fourPoints = new Point[] {
+                    new Point(-1, 0), new Point ( 0, -1), new Point( 0, 1), new Point( 1, 0),
+                };
+
+            for(int y = 0; y < Height; y++)
+            {
+                for(int x = 0; x < Width; x++)
+                {
+                    var cell = cellList[y * Width + x];
+                    cell.EightLink = eightPoints
+                                        .Select(p => new Point(y + p.Y, x + p.X))
+                                        .Select(pos => GetCellOrDefault(pos.Y, pos.X))
+                                        .ToArray();
+                    cell.FourLink = fourPoints
+                                        .Select(p => new Point(y + p.Y, x + p.X))
+                                        .Select(pos => GetCellOrDefault(pos.Y, pos.X))
+                                        .ToArray();
+                }
+            }
+        }
+
+        private bool EnableIndex(int y, int x) => (0 <= x && x < Width && 0 <= y && y < Height);
+
+        private MinesweeperCell GetCellOrDefault(int y, int x)
+        {
+            if(EnableIndex(y, x))
+            {
+                return cellList[y * Width + x];
+            }
+            return null;
+        }
+        public MinesweeperCell GetCellOrDefault(int index)
+        {
+            if(0 <= index && index < cellList.Count())
+            {
+                return cellList[index];
+            }
+            return null;
+        }
+
         public IEnumerator<MinesweeperCell> GetEnumerator() => cellList.GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => cellList.GetEnumerator();
-
-        public void Add(MinesweeperCell cell) => cellList.Add(cell);
 
         public void MakeHash(ulong[] hash)
         {
@@ -143,17 +199,15 @@ namespace Minesweeper.Common
 
     public class MinesweeperGame
     {
-        public int Width { get; }
-        public int Height { get; }
+        public int Width => Board.Width;
+        public int Height => Board.Height;
         public int BombNum { get; }
         public int RandomSeed { get; }
         public bool IsDead { get; private set; } = false;
         public bool IsClear => !IsDead && Board.Count(c => c.State == CellState.Open) == (Width * Height) - BombNum;
+        public MinesweeperBoard Board { get; }
 
         private BoardOpenResult userControllResult = new BoardOpenResult();
-
-        public MinesweeperBoard Board { get; } = new MinesweeperBoard();
-
         private Random random;
 
         public MinesweeperCell this[int index]
@@ -168,52 +222,9 @@ namespace Minesweeper.Common
         public MinesweeperGame(int width, int height, int bombNum, int seed)
         {
             random = new Random(seed);
-            Width = width;
-            Height = height;
+            Board = new MinesweeperBoard(width, height);
             BombNum = bombNum;
             RandomSeed = seed;
-
-            InitializeBoardOnce();
-        }
-
-        private void InitializeBoardOnce()
-        {
-            for(int i = 0; i < Height * Width; i++)
-            {
-                Board.Add(new MinesweeperCell()
-                {
-                    BoardIndex = i,
-                });
-            }
-            var eightPoints = new Point[] {
-                    new Point (-1, -1), new Point(-1, 0), new Point(-1, 1),
-                    new Point ( 0, -1),                   new Point( 0, 1),
-                    new Point ( 1, -1), new Point( 1, 0), new Point( 1, 1),
-                };
-
-            var fourPoints = new Point[] {
-                    new Point(-1, 0), new Point ( 0, -1), new Point( 0, 1), new Point( 1, 0),
-                };
-
-            for(int y = 0; y < Height; y++)
-            {
-                for(int x = 0; x < Width; x++)
-                {
-                    var cell = Board[y * Width + x];
-                    cell.EightLink = eightPoints
-                                        .Select(p => new Point(y + p.Y, x + p.X))
-                                        .Select(pos => GetCellOrDefault(pos.Y, pos.X))
-                                        .ToArray();
-                    cell.FourLink = fourPoints
-                                        .Select(p => new Point(y + p.Y, x + p.X))
-                                        .Select(pos => GetCellOrDefault(pos.Y, pos.X))
-                                        .ToArray();
-                    if(!cell.HasBomb)
-                    {
-                        cell.Value = cell.EightLink.Count(c => c?.HasBomb == true);
-                    }
-                }
-            }
         }
 
         private void CreateBoard(int bombNum, int seed)
@@ -242,24 +253,6 @@ namespace Minesweeper.Common
             }
         }
 
-        private MinesweeperCell GetCellOrDefault(int y, int x)
-        {
-            if(EnableIndex(y, x))
-            {
-                return Board[y * Width + x];
-            }
-            return null;
-        }
-        private MinesweeperCell GetCellOrDefault(int index)
-        {
-            if(0 <= index && index < Board.Count())
-            {
-                return Board[index];
-            }
-            return null;
-        }
-
-        private bool EnableIndex(int y, int x) => (0 <= x && x < Width && 0 <= y && y < Height);
 
         public BoardOpenResult OpenCell(int index)
         {
@@ -303,7 +296,7 @@ namespace Minesweeper.Common
         public BoardOpenResult OpenEightCell(int index)
         {
             userControllResult = new BoardOpenResult();
-            GetCellOrDefault(index)
+            Board.GetCellOrDefault(index)
                 .EightLink
                 .Where(c => c != null)
                 .ForEach(c => OpenCellSub(c.BoardIndex, 1));

@@ -14,54 +14,125 @@ namespace Minesweeper.ReinforcementLearningSolver
 
         static List<int> cleardCount = new List<int>();
 
+        class Param
+        {
+            public int LearnCount;
+            public float LearnStep;
+            public float Epsilon;
+            public int Width;
+            public int Height;
+            public int BombCount;
+        }
+
         static void Main(string[] args)
         {
-            LogInitializer.InitLog("MainLog", LearningParam.LogPath);
 
-            Stopwatch learnStopwatch = new Stopwatch();
-            learnStopwatch.Start();
-            Learn();
-            learnStopwatch.Stop();
+            const int SolveCount = 10000;
 
-            int clearCount = Solve();
+            var learnCounts = new int[] { 1000, 10000, 100000, };
+            var learnSteps = new float[] { 0.01f, 0.05f, 0.1f, 0.15f, 0.2f };
+            var epsilons = new float[] { 0.01f, 0.05f, 0.1f, 0.15f, 0.2f };
+            var widths = new int[] { 3, 4, 5 };
+            var heights = new int[] { 3, 4, 5 };
+            var bombCounts = new int[] { 2, 3, 4, 5, 6};
 
-            logger.Info("| 要素 | 値");
-            logger.Info("------------ | -------------");
-            logger.Info($"学習回数|{LearningParam.LearnCount}|");
-            logger.Info($"ボードサイズ|{Config.BoardWidth}x{Config.BoardHeight}|");
-            logger.Info($"爆弾の数|{Config.BombCount}|");
-            logger.Info($"性能確認回数回数|{SolveParam.SolveCount}|");
-            logger.Info($"クリア回数|{cleardCount.Count}|");
-            logger.Info($"クリア率|{cleardCount.Count / (double)SolveParam.SolveCount}|");
-            logger.Info($"学習にかかった時間|{learnStopwatch.Elapsed.ToString()}|");
+            List<Param> paramList = new List<Param>();
+            foreach(var learnCount in learnCounts)
+            {
+                foreach(var step in learnSteps)
+                {
+                    foreach(var epsilon in epsilons)
+                    {
+                        foreach(var w in widths)
+                        {
+                            foreach(var h in heights)
+                            {
+                                foreach(var b in bombCounts)
+                                {
+                                    paramList.Add(new Param()
+                                    {
+                                        LearnCount = learnCount,
+                                        LearnStep = step,
+                                        Epsilon = epsilon,
+                                        Width = w,
+                                        Height = h,
+                                        BombCount = b
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+
+            for(int i = 0; i < paramList.Count; i++)
+            {
+                Param param = paramList[i];
+                BoardConfig boardConfig = new BoardConfig(param.Width, param.Height, param.BombCount);
+                LearningParam learningParam = new LearningParam(boardConfig, param.LearnCount, param.LearnStep, param.Epsilon);
+                LogInitializer.InitLog("MainLog", learningParam.LogPath);
+
+                Stopwatch learnStopwatch = new Stopwatch();
+                learnStopwatch.Start();
+                Learn(learningParam);
+                learnStopwatch.Stop();
+
+                // 学習結果を用いないで
+                SolveParam solveParamNotLearning = new SolveParam(boardConfig, SolveCount, "", param.Epsilon);
+                int clearCountNotLearning = Solve(solveParamNotLearning);
+
+                // 学習結果を用いて
+                SolveParam solveParamUseLearning = new SolveParam(boardConfig, SolveCount, learningParam.ValueCsvPath, param.Epsilon);
+                int clearCountUseLearning = Solve(solveParamUseLearning);
+
+
+                logger.Info("| 要素 | 値");
+                logger.Info("------------ | -------------");
+                logger.Info($"ボードサイズ|{boardConfig.BoardWidth}x{boardConfig.BoardHeight}|");
+                logger.Info($"爆弾の数|{boardConfig.BombCount}|");
+                logger.Info($"学習回数|{learningParam.LearnCount}|");
+                logger.Info($"LearnStep|{learningParam.LearnStepSize}|");
+                logger.Info($"Epsilion|{learningParam.Epsilon}|");
+                logger.Info($"学習にかかった時間|{learnStopwatch.Elapsed.ToString()}|");
+
+                logger.Info($"性能確認回数回数|{SolveCount}|");
+                logger.Info($"学習無しクリア回数|{clearCountNotLearning}|");
+                logger.Info($"学習無しクリア率|{clearCountNotLearning / (double)SolveCount}|");
+                logger.Info($"学習有りクリア回数|{clearCountUseLearning}|");
+                logger.Info($"学習有りクリア率|{clearCountUseLearning / (double)SolveCount}|");
+
+                Console.WriteLine($"{i}/{paramList.Count}");
+            }
 
             logger.Info($"GC.CollectionCount(0)|{GC.CollectionCount(0).ToString()}|");
             logger.Info($"GC.CollectionCount(1)|{GC.CollectionCount(1).ToString()}|");
             logger.Info($"GC.CollectionCount(2)|{GC.CollectionCount(2).ToString()}|");
-
-            logger.Debug("-------------------------");
-            //cleardCount.ForEach(cnt => logger.Debug(cnt.ToString("D10")));
         }
 
-        static void Learn()
+        static void Learn(LearningParam learningParam)
         {
-            EvaluationValue value = new EvaluationValue();
+            EvaluationValue value = new EvaluationValue(learningParam.LearnStepSize);
 
-            if(LearningParam.LoadValueFile)
+            if(learningParam.LoadValueFile)
             {
-                value.LoadFromCsvFile(LearningParam.ValueCsvPath);
+                value.LoadFromCsvFile(learningParam.ValueCsvPath);
             }
 
-            LearningCom com = new LearningCom(value, true, LearningParam.ComRandomSeed);
-            MinesweeperGame game = new MinesweeperGame(Config.BoardWidth, Config.BoardHeight, Config.BombCount, LearningParam.BoardRandomSeed);
+            LearningCom com = new LearningCom(value, true, learningParam.ComRandomSeed, learningParam.Epsilon);
+            MinesweeperGame game = new MinesweeperGame(
+                learningParam.BoardConfig.BoardWidth, 
+                learningParam.BoardConfig.BoardHeight, 
+                learningParam.BoardConfig.BombCount, 
+                learningParam.BoardRandomSeed);
             MinesweeperLearner leaner = new MinesweeperLearner(game, com, value);
 
             try
             {
-                for(int i = 0; i < LearningParam.LearnCount; i++)
+                for(int i = 0; i < learningParam.LearnCount; i++)
                 {
                     leaner.Learn();
-                    LearningProgressView(i);
+                    LearningProgressView(i, learningParam.LearnCount);
                 }
             }
             catch(Exception e)
@@ -70,16 +141,16 @@ namespace Minesweeper.ReinforcementLearningSolver
             }
 
             // save
-            if(LearningParam.SaveValueFile)
+            if(learningParam.SaveValueFile)
             {
-                value.SaveToCsvFile(LearningParam.ValueCsvPath);
+                value.SaveToCsvFile(learningParam.ValueCsvPath);
             }
         }
 
         static int learningProgress = 0;
-        static void LearningProgressView(int currentLeanCount)
+        static void LearningProgressView(int currentLeanCount, int learnCount)
         {
-            float per = ((float)currentLeanCount / LearningParam.LearnCount) * 100f;
+            float per = ((float)currentLeanCount / learnCount) * 100f;
             if(per >= learningProgress)
             {
                 learningProgress += 1;
@@ -88,19 +159,24 @@ namespace Minesweeper.ReinforcementLearningSolver
         }
 
 
-        static int Solve()
+        static int Solve(SolveParam solveParam)
         {
-            EvaluationValue value = new EvaluationValue();
-            if(SolveParam.LoadValueFile)
+            cleardCount.Clear();
+            EvaluationValue value = new EvaluationValue(0);
+            if(solveParam.LoadValueFile)
             {
-                value.LoadFromCsvFile(SolveParam.ValueCsvPath);
+                value.LoadFromCsvFile(solveParam.ValueCsvPath);
             }
 
-            LearningCom com = new LearningCom(value, false, SolveParam.ComRandomSeed);
-            MinesweeperGame game = new MinesweeperGame(Config.BoardWidth, Config.BoardHeight, Config.BombCount, SolveParam.GameRandomSeed);
+            LearningCom com = new LearningCom(value, false, solveParam.ComRandomSeed, solveParam.Epsilon);
+            MinesweeperGame game = new MinesweeperGame(
+                solveParam.BoardConfig.BoardWidth, 
+                solveParam.BoardConfig.BoardHeight,
+                solveParam.BoardConfig.BombCount, 
+                solveParam.GameRandomSeed);
 
             ulong[] boardHashBuf = new ulong[2];
-            for(int i = 0; i < SolveParam.SolveCount; i++)
+            for(int i = 0; i < solveParam.SolveCount; i++)
             {
                 game.ClearBoard();
                 game.GenerateRandomBoard();
@@ -110,7 +186,7 @@ namespace Minesweeper.ReinforcementLearningSolver
                     var currentAction = com.SelectCommand(game.Board);
 
                     game.Board.MakeHash(boardHashBuf);
-                    int idx = currentAction.Y * Config.BoardWidth + currentAction.X;
+                    int idx = currentAction.Y * solveParam.BoardConfig.BoardWidth + currentAction.X;
                     var result = game.OpenCell(idx);
 
                     if(result.IsClear)
@@ -135,7 +211,7 @@ namespace Minesweeper.ReinforcementLearningSolver
         {
             return board
                     .Where(c => c.State == CellState.Close)
-                    .Select(c => new GameCommand(c.BoardIndex / Config.BoardWidth, c.BoardIndex % Config.BoardWidth, GameCommandType.Open))
+                    .Select(c => new GameCommand(c.BoardIndex / board.Width, c.BoardIndex % board.Width, GameCommandType.Open))
                     .ToArray();
         }
 

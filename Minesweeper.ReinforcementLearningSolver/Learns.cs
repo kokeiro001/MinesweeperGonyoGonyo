@@ -29,7 +29,7 @@ namespace Minesweeper.ReinforcementLearningSolver
                 var currentAction = com.SelectCommand(game.Board);
 
                 game.Board.MakeHash(boardHashBuf);
-                int idx = currentAction.Y * Config.BoardWidth + currentAction.X;
+                int idx = currentAction.Y * game.Board.Width + currentAction.X;
                 var result = game.OpenCell(idx);
 
                 if(result.IsClear)
@@ -68,10 +68,15 @@ namespace Minesweeper.ReinforcementLearningSolver
 
     class EvaluationValue
     {
-        static float stepSize = 0.1f;
+        float stepSize;
         ulong[] boardHashBuf = new ulong[2];
 
         UlongsDictionary<Dictionary<GameCommand, double>> valueDic = new UlongsDictionary<Dictionary<GameCommand, double>>();
+
+        public EvaluationValue(float stepSize)
+        {
+            this.stepSize = stepSize;
+        }
 
         public GameCommand GetMaxCommand(MinesweeperBoard board)
         {
@@ -157,16 +162,17 @@ namespace Minesweeper.ReinforcementLearningSolver
 
     class LearningCom
     {
-        static double epsilon = 0.1;
+        double epsilon = 0.1;
         Random random;
         EvaluationValue value;
         public bool learning { get; private set; }
 
-        public LearningCom(EvaluationValue value, bool learning, int randomSeed)
+        public LearningCom(EvaluationValue value, bool learning, int randomSeed, double epsilon)
         {
             this.value = value;
             this.learning = learning;
             this.random = new Random(randomSeed);
+            this.epsilon = epsilon;
         }
 
         public GameCommand SelectCommand(MinesweeperBoard state)
