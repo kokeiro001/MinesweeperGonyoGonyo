@@ -55,9 +55,7 @@ namespace Minesweeper.ReinforcementLearningSolver
                                         Height = h,
                                         BombCount = b
                                     });
-                                    goto PARAM_CREATED;
                                 }
-            PARAM_CREATED:
 
             for(int i = 0; i < paramList.Count; i++)
             {
@@ -72,14 +70,14 @@ namespace Minesweeper.ReinforcementLearningSolver
                 learnStopwatch.Stop();
 
                 // 学習結果を用いないで
-                SolveParam solveParamNotLearning = new SolveParam(boardConfig, SolveTrialCount, "", param.Epsilon);
-                int clearCountNotLearning = Solve(solveParamNotLearning);
+                SolveParam solveParamUnuseLearningData = new SolveParam(boardConfig, SolveTrialCount, "", param.Epsilon);
+                int solvedCountUnuseLearningData = Solve(solveParamUnuseLearningData);
 
                 // 学習結果を用いて
-                SolveParam solveParamUseLearning = new SolveParam(boardConfig, SolveTrialCount, learningParam.ValueCsvPath, param.Epsilon);
-                int clearCountUseLearning = Solve(solveParamUseLearning);
+                SolveParam solveParamUseLearningData = new SolveParam(boardConfig, SolveTrialCount, learningParam.ValueCsvPath, param.Epsilon);
+                int solvedCountUseLearningData = Solve(solveParamUseLearningData);
 
-                WriteLog(boardConfig, learningParam, learnStopwatch, SolveTrialCount, clearCountNotLearning, clearCountUseLearning);
+                WriteLog(boardConfig, learningParam, learnStopwatch, SolveTrialCount, solvedCountUnuseLearningData, solvedCountUseLearningData);
 
                 Console.WriteLine($"{i}/{paramList.Count}");
             }
@@ -94,8 +92,8 @@ namespace Minesweeper.ReinforcementLearningSolver
             LearningParam learningParam, 
             Stopwatch learnStopwatch, 
             int solveTrialCount, 
-            int clearCountNotLearning, 
-            int clearCountUseLearning)
+            int solvedCountUnusedLearningData, 
+            int solvedCountUseLearningData)
         {
             logger.Info("| 要素 | 値");
             logger.Info("------------ | -------------");
@@ -107,17 +105,32 @@ namespace Minesweeper.ReinforcementLearningSolver
             logger.Info($"学習にかかった時間|{learnStopwatch.Elapsed.ToString()}|");
 
             logger.Info($"性能確認回数回数|{solveTrialCount}|");
-            logger.Info($"学習無しクリア回数|{clearCountNotLearning}|");
-            logger.Info($"学習無しクリア率|{clearCountNotLearning / (double)solveTrialCount}|");
-            logger.Info($"学習有りクリア回数|{clearCountUseLearning}|");
-            logger.Info($"学習有りクリア率|{clearCountUseLearning / (double)solveTrialCount}|");
+            logger.Info($"学習無しクリア回数|{solvedCountUnusedLearningData}|");
+            logger.Info($"学習無しクリア率|{solvedCountUnusedLearningData / (double)solveTrialCount}|");
+            logger.Info($"学習有りクリア回数|{solvedCountUseLearningData}|");
+            logger.Info($"学習有りクリア率|{solvedCountUseLearningData / (double)solveTrialCount}|");
 
             var table = db.Table<LearningResult>();
             var learningResult = new LearningResult()
             {
+                AlgorithmVersion = "hoge",
+                CreatedAt = DateTime.Now,
+
+                // Board
+                BoardWidth = boardConfig.BoardWidth,
+                BoardHeight = boardConfig.BoardHeight,
+                BombCount = boardConfig.BombCount,
+
+                // Learn
                 LearnCount = learningParam.LearnCount,
-                SolvedCount = clearCountUseLearning,
-                SolveTrialCount = solveTrialCount
+                LearnTime = learnStopwatch.Elapsed,
+                LearnStepSize = learningParam.LearnStepSize,
+                LearnEpsilion = learningParam.Epsilon,
+
+                // Solve
+                SolveTrialCount = solveTrialCount,
+                SolvedCountUseLearningData = solvedCountUseLearningData,
+                SolvedCountUnuseLearningData = solvedCountUnusedLearningData
             };
             db.Insert(learningResult);
         }
