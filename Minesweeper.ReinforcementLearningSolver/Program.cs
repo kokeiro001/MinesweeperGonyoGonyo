@@ -63,7 +63,7 @@ namespace Minesweeper.ReinforcementLearningSolver
 
                 Stopwatch learnStopwatch = new Stopwatch();
                 learnStopwatch.Start();
-                Learn(learningParam);
+                var value = Learn(learningParam);
                 learnStopwatch.Stop();
 
                 // 学習結果を用いないで
@@ -71,8 +71,9 @@ namespace Minesweeper.ReinforcementLearningSolver
                 int solvedCountUnuseLearningData = Solve(solveParamUnuseLearningData);
 
                 // 学習結果を用いて
-                SolveParam solveParamUseLearningData = new SolveParam(learningParam.BoardConfig, SolveTrialCount, learningParam.ValueCsvPath, learningParam.Epsilon);
-                int solvedCountUseLearningData = Solve(solveParamUseLearningData);
+                //SolveParam solveParamUseLearningData = new SolveParam(learningParam.BoardConfig, SolveTrialCount, learningParam.ValueCsvPath, learningParam.Epsilon);
+                SolveParam solveParamUseLearningData = new SolveParam(learningParam.BoardConfig, SolveTrialCount, "", learningParam.Epsilon);
+                int solvedCountUseLearningData = Solve(solveParamUseLearningData, value);
 
                 WriteLog(learningParam.BoardConfig, learningParam, learnStopwatch, SolveTrialCount, solvedCountUnuseLearningData, solvedCountUseLearningData);
 
@@ -135,7 +136,7 @@ namespace Minesweeper.ReinforcementLearningSolver
             db.Insert(learningResult);
         }
 
-        static void Learn(LearningParam learningParam)
+        static EvaluationValue Learn(LearningParam learningParam)
         {
             EvaluationValue value = new EvaluationValue(learningParam.LearnStepSize);
 
@@ -170,6 +171,7 @@ namespace Minesweeper.ReinforcementLearningSolver
             {
                 value.SaveToCsvFile(learningParam.ValueCsvPath);
             }
+            return value;
         }
 
         static int learningProgress = 0;
@@ -184,12 +186,15 @@ namespace Minesweeper.ReinforcementLearningSolver
         }
 
 
-        static int Solve(SolveParam solveParam)
+        static int Solve(SolveParam solveParam, EvaluationValue value = null)
         {
-            EvaluationValue value = new EvaluationValue(0);
-            if(solveParam.LoadValueFile)
+            if(value == null)
             {
-                value.LoadFromCsvFile(solveParam.ValueCsvPath);
+                value = new EvaluationValue(0);
+                if(solveParam.LoadValueFile)
+                {
+                    value.LoadFromCsvFile(solveParam.ValueCsvPath);
+                }
             }
 
             MinesweeperCom com = new MinesweeperCom(value, false, solveParam.ComRandomSeed, solveParam.Epsilon);

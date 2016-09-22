@@ -22,7 +22,7 @@ namespace Minesweeper.ReinforcementLearningSolver
         public int ComRandomSeed => 0;
 
         public bool LoadValueFile => false;
-        public bool SaveValueFile => true;
+        public bool SaveValueFile => false;
 
         public readonly BoardConfig BoardConfig;
         public readonly int LearnCount;
@@ -60,6 +60,12 @@ namespace Minesweeper.ReinforcementLearningSolver
 
     class SolveParam
     {
+        enum LoadValueFrom
+        {
+            OnMemory,
+            CsvFile
+        }
+
         public int GameRandomSeed => 1192;
         public int ComRandomSeed => 1901;
 
