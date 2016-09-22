@@ -37,17 +37,17 @@ namespace Minesweeper.ReinforcementLearningSolver
                     // 状態が変わったセルの数に応じて、報酬を与える
                     if(result.StateChangedCells.Count == 1)
                     {
-                        com.Learn(boardHashBuf, currentAction, 0.1);
+                        value.Update(boardHashBuf, currentAction, 0.1);
                     }
                     else
                     {
-                        com.Learn(boardHashBuf, currentAction, 0.2);
+                        value.Update(boardHashBuf, currentAction, 0.2);
                     }
                     return true;
                 }
                 else if(result.IsDead)
                 {
-                    com.Learn(boardHashBuf, currentAction, -1);
+                    value.Update(boardHashBuf, currentAction, 0.2);
                     return false;
                 }
                 else
@@ -55,11 +55,11 @@ namespace Minesweeper.ReinforcementLearningSolver
                     // 状態が変わったセルの数に応じて、報酬を与える
                     if(result.StateChangedCells.Count == 1)
                     {
-                        com.Learn(boardHashBuf, currentAction, 0.1);
+                        value.Update(boardHashBuf, currentAction, 0.1);
                     }
                     else
                     {
-                        com.Learn(boardHashBuf, currentAction, 0.2);
+                        value.Update(boardHashBuf, currentAction, 0.2);
                     }
                 }
             }
@@ -190,14 +190,5 @@ namespace Minesweeper.ReinforcementLearningSolver
 
             return selectedCommand;
         }
-
-        public void Learn(ulong[] beforeBoardHash, GameCommand command, double reward)
-        {
-            if(learning)
-            {
-                value.Update(beforeBoardHash, command, reward);
-            }
-        }
-
     }
 }
