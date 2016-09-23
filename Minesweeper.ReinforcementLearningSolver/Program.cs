@@ -31,30 +31,24 @@ namespace Minesweeper.ReinforcementLearningSolver
             var rewardMultiCells = new float[] { 0.05f, 0.1f, 0.2f, 0.5f, 2f };
             var rewardDeads = new float[] { -0.1f, -0.2f, -0.5f, -1f, -2f};
 
-            List<LearningParam> paramList = new List<LearningParam>();
-            foreach(var w in widths)
-                foreach(var h in heights)
-                    foreach(var b in bombCounts)
-                    {
-                        BoardConfig boardConfig = new BoardConfig(w, h, b);
-
-                        foreach(var learnCount in learnCounts)
-                            foreach(var step in learnSteps)
-                                foreach(var epsilon in epsilons)
-                                    foreach(var rewardOneCell in rewardOneCells)
-                                        foreach(var rewardMultiCell in rewardMultiCells)
-                                            foreach(var rewardDead in rewardDeads)
-                                            {
-                                                paramList.Add(new LearningParam(
-                                                    boardConfig,
-                                                    learnCount,
-                                                    step,
-                                                    epsilon,
-                                                    rewardOneCell,
-                                                    rewardMultiCell,
-                                                    rewardDead));
-                                            }
-                    }
+            var tmp = from w in widths
+                      from h in heights
+                      from bomb in bombCounts
+                      let boardConfig = new BoardConfig(w, h, bomb)
+                      from learnCount in learnCounts
+                      from step in learnSteps
+                      from epsilon in epsilons
+                      from rewardOneCell in rewardOneCells
+                      from rewardMultiCell in rewardMultiCells
+                      from rewardDead in rewardDeads
+                      select new LearningParam(boardConfig,
+                                               learnCount,
+                                               step,
+                                               epsilon,
+                                               rewardOneCell,
+                                               rewardMultiCell,
+                                               rewardDead);
+            var paramList = tmp.ToList();
 
             for(int i = 0; i < paramList.Count; i++)
             {
