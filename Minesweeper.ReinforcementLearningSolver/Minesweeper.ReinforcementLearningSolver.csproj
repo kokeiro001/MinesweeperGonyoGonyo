@@ -87,7 +87,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Configs.cs" />
-    <Compile Include="LearningResult.cs" />
     <Compile Include="Learns.cs" />
     <Compile Include="LogInitializer.cs" />
     <Compile Include="Program.cs" />
