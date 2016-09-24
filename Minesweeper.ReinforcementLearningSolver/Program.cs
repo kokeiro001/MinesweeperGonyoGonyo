@@ -127,7 +127,6 @@ namespace Minesweeper.ReinforcementLearningSolver
 
         static EvaluationValue Learn(LearningParam learningParam)
         {
-
             MinesweeperLearner leaner = new MinesweeperLearner(learningParam);
             try
             {
@@ -138,7 +137,6 @@ namespace Minesweeper.ReinforcementLearningSolver
                 logger.Error(e);
             }
 
-            // save csv
             if(learningParam.SaveValueFile)
             {
                 leaner.EvaluationValue.SaveToCsvFile(learningParam.ValueCsvPath);
@@ -146,10 +144,9 @@ namespace Minesweeper.ReinforcementLearningSolver
             return leaner.EvaluationValue;
         }
 
-
         static int Solve(SolveParam solveParam)
         {
-            MinesweeperCom com = new MinesweeperCom(solveParam.EvalutionValue, false, solveParam.ComRandomSeed, 0);
+            MinesweeperCom com = new MinesweeperCom(solveParam.EvalutionValue, solveParam.ComRandomSeed, -1);
             MinesweeperGame game = new MinesweeperGame(
                 solveParam.BoardConfig.BoardWidth, 
                 solveParam.BoardConfig.BoardHeight,

@@ -27,7 +27,7 @@ namespace Minesweeper.ReinforcementLearningSolver
                     EvaluationValue.LoadFromCsvFile(learningParam.ValueCsvPath) :
                     new EvaluationValue();
 
-            com = new MinesweeperCom(EvaluationValue, true, learningParam.ComRandomSeed, learningParam.Epsilon);
+            com = new MinesweeperCom(EvaluationValue, learningParam.ComRandomSeed, learningParam.Epsilon);
             game = new MinesweeperGame(
                 learningParam.BoardConfig.BoardWidth,
                 learningParam.BoardConfig.BoardHeight,
@@ -207,17 +207,15 @@ namespace Minesweeper.ReinforcementLearningSolver
 
     class MinesweeperCom
     {
-        double epsilon = 0.1;
+        double selectRandomCommandRate = 0.1;
         Random random;
         EvaluationValue value;
-        public bool learning { get; private set; }
 
-        public MinesweeperCom(EvaluationValue value, bool learning, int randomSeed, double epsilon)
+        public MinesweeperCom(EvaluationValue value, int randomSeed, double selectRandomCommandRate)
         {
             this.value = value;
-            this.learning = learning;
             this.random = new Random(randomSeed);
-            this.epsilon = epsilon;
+            this.selectRandomCommandRate = selectRandomCommandRate;
         }
 
         public GameCommand SelectCommand(MinesweeperGame game)
@@ -225,8 +223,7 @@ namespace Minesweeper.ReinforcementLearningSolver
             var maxCommand = value.GetMaxCommand(game.Board);
             var selectedCommand = maxCommand;
 
-            // 挙動方策（ε-グリーディ）で行動を決定
-            if(selectedCommand == null || (learning && random.NextDouble() < epsilon))
+            if(selectedCommand == null || (selectRandomCommandRate >= 0 && random.NextDouble() < selectRandomCommandRate))
             {
                 var validCommands = game.ValidCommands();
                 int randomIndex = random.Next(validCommands.Length);
