@@ -215,10 +215,6 @@ namespace Minesweeper.Common
             get { return Board[index]; }
         }
 
-        public MinesweeperGame(int width, int height, int bombNum)
-            : this(width, height, bombNum, new Random().Next())
-        {
-        }
         public MinesweeperGame(int width, int height, int bombNum, int seed)
         {
             random = new Random(seed);
