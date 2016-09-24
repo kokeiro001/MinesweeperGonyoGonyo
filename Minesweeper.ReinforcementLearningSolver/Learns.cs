@@ -9,14 +9,14 @@ namespace Minesweeper.ReinforcementLearningSolver
     class MinesweeperLearner
     {
         public ulong[] boardHashBuf = new ulong[2];
-        EvaluationValue value;
+        EvaluationValue evalutionValue;
         MinesweeperCom com;
         MinesweeperGame game;
         LearningParam learningParam;
 
-        public MinesweeperLearner(MinesweeperGame game, MinesweeperCom com, EvaluationValue value, LearningParam learningParam)
+        public MinesweeperLearner(MinesweeperGame game, MinesweeperCom com, EvaluationValue evalutionValue, LearningParam learningParam)
         {
-            this.value = value;
+            this.evalutionValue = evalutionValue;
             this.game = game;
             this.com = com;
             this.learningParam = learningParam;
@@ -40,17 +40,17 @@ namespace Minesweeper.ReinforcementLearningSolver
                     // 状態が変わったセルの数に応じて、報酬を与える
                     if(result.StateChangedCells.Count == 1)
                     {
-                        value.Update(boardHashBuf, currentAction, learningParam.RewardOpenOneCell);
+                        evalutionValue.Update(boardHashBuf, currentAction, learningParam.RewardOpenOneCell);
                     }
                     else
                     {
-                        value.Update(boardHashBuf, currentAction, learningParam.RewardOpenMultiCell);
+                        evalutionValue.Update(boardHashBuf, currentAction, learningParam.RewardOpenMultiCell);
                     }
                     return true;
                 }
                 else if(result.IsDead)
                 {
-                    value.Update(boardHashBuf, currentAction, learningParam.RewardDead);
+                    evalutionValue.Update(boardHashBuf, currentAction, learningParam.RewardDead);
                     return false;
                 }
                 else
@@ -58,11 +58,11 @@ namespace Minesweeper.ReinforcementLearningSolver
                     // 状態が変わったセルの数に応じて、報酬を与える
                     if(result.StateChangedCells.Count == 1)
                     {
-                        value.Update(boardHashBuf, currentAction, learningParam.RewardOpenOneCell);
+                        evalutionValue.Update(boardHashBuf, currentAction, learningParam.RewardOpenOneCell);
                     }
                     else
                     {
-                        value.Update(boardHashBuf, currentAction, learningParam.RewardOpenMultiCell);
+                        evalutionValue.Update(boardHashBuf, currentAction, learningParam.RewardOpenMultiCell);
                     }
                 }
             }
@@ -137,9 +137,10 @@ namespace Minesweeper.ReinforcementLearningSolver
             }
         }
 
-        public void LoadFromCsvFile(string filePath)
+
+        public static EvaluationValue LoadFromCsvFile(string filePath)
         {
-            valueDic = new UlongsDictionary<Dictionary<GameCommand, double>>();
+            var evalutionValue = new EvaluationValue();
 
             using(StreamReader csvReader = new StreamReader(filePath))
             {
@@ -147,12 +148,12 @@ namespace Minesweeper.ReinforcementLearningSolver
                 {
                     var values = csvReader.ReadLine().Split(',');
 
-                    boardHashBuf[0] = ulong.Parse(values[0]);
-                    boardHashBuf[1] = ulong.Parse(values[1]);
+                    evalutionValue.boardHashBuf[0] = ulong.Parse(values[0]);
+                    evalutionValue.boardHashBuf[1] = ulong.Parse(values[1]);
 
-                    if(!valueDic.ContainsKey(boardHashBuf))
+                    if(!evalutionValue.valueDic.ContainsKey(evalutionValue.boardHashBuf))
                     {
-                        valueDic.Add(boardHashBuf, new Dictionary<GameCommand, double>());
+                        evalutionValue.valueDic.Add(evalutionValue.boardHashBuf, new Dictionary<GameCommand, double>());
                     }
 
                     var command = new GameCommand(
@@ -160,9 +161,10 @@ namespace Minesweeper.ReinforcementLearningSolver
                         int.Parse(values[3]),
                         GameCommandType.Open);
                     double value = double.Parse(values[4]);
-                    valueDic.Get(boardHashBuf).Add(command, value);
+                    evalutionValue.valueDic.Get(evalutionValue.boardHashBuf).Add(command, value);
                 }
             }
+            return evalutionValue;
         }
 
     }

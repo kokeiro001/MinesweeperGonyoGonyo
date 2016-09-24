@@ -70,12 +70,12 @@ namespace Minesweeper.ReinforcementLearningSolver
         public readonly int SolveTrialCount;
 
         public readonly BoardConfig BoardConfig;
-        public readonly EvaluationValue Value;
+        public readonly EvaluationValue EvalutionValue;
 
         public SolveParam(BoardConfig boardConfig, EvaluationValue value, int solveTrialCount)
         {
             BoardConfig = boardConfig;
-            Value = value;
+            EvalutionValue = value;
             SolveTrialCount = solveTrialCount;
         }
     }

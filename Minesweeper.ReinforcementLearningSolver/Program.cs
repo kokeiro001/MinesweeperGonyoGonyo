@@ -54,7 +54,7 @@ namespace Minesweeper.ReinforcementLearningSolver
 
                 Stopwatch learnStopwatch = new Stopwatch();
                 learnStopwatch.Start();
-                var value = Learn(learningParam);
+                var evaluationValue = Learn(learningParam);
                 learnStopwatch.Stop();
 
                 // 学習結果を用いないで指定回数解いてみる。
@@ -63,7 +63,7 @@ namespace Minesweeper.ReinforcementLearningSolver
                 int solvedCountUnuseLearningData = Solve(solveParamUnuseLearningData);
 
                 // 学習結果を用いて指定回数解いてみる。
-                SolveParam solveParamUseLearningData = new SolveParam(learningParam.BoardConfig, value, SolveTrialCount);
+                SolveParam solveParamUseLearningData = new SolveParam(learningParam.BoardConfig, evaluationValue, SolveTrialCount);
                 int solvedCountUseLearningData = Solve(solveParamUseLearningData);
 
                 WriteLog(learningParam.BoardConfig, learningParam, learnStopwatch, SolveTrialCount, solvedCountUnuseLearningData, solvedCountUseLearningData);
@@ -127,20 +127,17 @@ namespace Minesweeper.ReinforcementLearningSolver
 
         static EvaluationValue Learn(LearningParam learningParam)
         {
-            EvaluationValue value = new EvaluationValue();
+            EvaluationValue evalutionValue = learningParam.LoadValueFile ?
+                    EvaluationValue.LoadFromCsvFile(learningParam.ValueCsvPath) :
+                    new EvaluationValue();
 
-            if(learningParam.LoadValueFile)
-            {
-                value.LoadFromCsvFile(learningParam.ValueCsvPath);
-            }
-
-            MinesweeperCom com = new MinesweeperCom(value, true, learningParam.ComRandomSeed, learningParam.Epsilon);
+            MinesweeperCom com = new MinesweeperCom(evalutionValue, true, learningParam.ComRandomSeed, learningParam.Epsilon);
             MinesweeperGame game = new MinesweeperGame(
                 learningParam.BoardConfig.BoardWidth, 
                 learningParam.BoardConfig.BoardHeight, 
                 learningParam.BoardConfig.BombCount, 
                 learningParam.BoardRandomSeed);
-            MinesweeperLearner leaner = new MinesweeperLearner(game, com, value, learningParam);
+            MinesweeperLearner leaner = new MinesweeperLearner(game, com, evalutionValue, learningParam);
 
             try
             {
@@ -159,9 +156,9 @@ namespace Minesweeper.ReinforcementLearningSolver
             // save
             if(learningParam.SaveValueFile)
             {
-                value.SaveToCsvFile(learningParam.ValueCsvPath);
+                evalutionValue.SaveToCsvFile(learningParam.ValueCsvPath);
             }
-            return value;
+            return evalutionValue;
         }
 
         static int learningProgress = 0;
@@ -178,7 +175,7 @@ namespace Minesweeper.ReinforcementLearningSolver
 
         static int Solve(SolveParam solveParam)
         {
-            MinesweeperCom com = new MinesweeperCom(solveParam.Value, false, solveParam.ComRandomSeed, 0);
+            MinesweeperCom com = new MinesweeperCom(solveParam.EvalutionValue, false, solveParam.ComRandomSeed, 0);
             MinesweeperGame game = new MinesweeperGame(
                 solveParam.BoardConfig.BoardWidth, 
                 solveParam.BoardConfig.BoardHeight,
