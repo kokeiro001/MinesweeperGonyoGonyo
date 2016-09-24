@@ -10,7 +10,7 @@ namespace Minesweeper.Common
 
         public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> list, int seed)
         {
-            Random rnd = new Random(seed);
+            Random rnd = new Random(seed);  // うーんこの
             T[] result = list.ToArray();
             for(int i = result.Length - 1; i > 1; i--)
             {

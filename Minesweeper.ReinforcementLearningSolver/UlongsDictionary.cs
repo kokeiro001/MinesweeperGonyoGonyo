@@ -47,4 +47,6 @@ namespace Minesweeper.ReinforcementLearningSolver
             }
         }
     }
+
+    // BigIntegerでディクショナリとか作るのはどうかしら？Redisとかの利用の検討はどうかしら？
 }
