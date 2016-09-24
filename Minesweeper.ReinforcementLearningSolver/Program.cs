@@ -90,13 +90,16 @@ namespace Minesweeper.ReinforcementLearningSolver
             logger.Info($"爆弾の数|{boardConfig.BombCount}|");
             logger.Info($"学習回数|{learningParam.LearnCount}|");
             logger.Info($"Epsilion|{learningParam.Epsilon}|");
+            logger.Info($"RewardOpenOneCell|{learningParam.RewardOpenOneCell}");
+            logger.Info($"RewardOpenMultiCell|{learningParam.RewardOpenMultiCell}");
+            logger.Info($"RewardDead|{learningParam.RewardDead}");
+
             logger.Info($"学習にかかった時間|{learnStopwatch.Elapsed.ToString()}|");
 
             logger.Info($"性能確認回数回数|{solveTrialCount}|");
             logger.Info($"学習無しクリア回数|{solvedCountUnusedLearningData}|");
-            logger.Info($"学習無しクリア率|{solvedCountUnusedLearningData / (double)solveTrialCount}|");
             logger.Info($"学習有りクリア回数|{solvedCountUseLearningData}|");
-            logger.Info($"学習有りクリア率|{solvedCountUseLearningData / (double)solveTrialCount}|");
+            logger.Info("-------------------------");
 
             var table = learningResultDB.Table<LearningResult>();
             var learningResult = new LearningResult()
