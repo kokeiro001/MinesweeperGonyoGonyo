@@ -22,13 +22,13 @@ namespace Minesweeper.ReinforcementLearningSolver
             const int SolveTrialCount = 100000;
 
             var learnCounts = new int[] { /*1000,*/ 10000, /*100000,*/ };
-            var epsilons = new float[] { 0.01f, 0.05f, 0.1f, 0.15f, 0.2f };
+            var epsilons = new float[] { 0.1f, };
             var widths = new int[] { 3, 4, 5 };
             var heights = new int[] { 3, 4, 5 };
             var bombCounts = new int[] { 2,/* 3,*/ 4, /*5,*/ 6 };
-            var rewardOneCells = new float[] { 0.05f, 0.1f, 0.2f, 0.5f, 1f };
-            var rewardMultiCells = new float[] { 0.05f, 0.1f, 0.2f, 0.5f, 2f };
-            var rewardDeads = new float[] { -0.1f, -0.2f, -0.5f, -1f, -2f};
+            var rewardOneCells = new float[] { 0.05f, 0.1f, 0.2f,  };
+            var rewardMultiCells = new float[] { 0.2f, 0.5f, 2f };
+            var rewardDeads = new float[] { -1f, -2f};
 
             var tmp = from w in widths
                       from h in heights
@@ -62,7 +62,6 @@ namespace Minesweeper.ReinforcementLearningSolver
                 int solvedCountUnuseLearningData = Solve(solveParamUnuseLearningData);
 
                 // 学習結果を用いて
-                //SolveParam solveParamUseLearningData = new SolveParam(learningParam.BoardConfig, SolveTrialCount, learningParam.ValueCsvPath, learningParam.Epsilon);
                 SolveParam solveParamUseLearningData = new SolveParam(learningParam.BoardConfig, SolveTrialCount, "", learningParam.Epsilon);
                 int solvedCountUseLearningData = Solve(solveParamUseLearningData, value);
 
