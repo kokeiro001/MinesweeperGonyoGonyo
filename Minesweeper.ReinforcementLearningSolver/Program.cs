@@ -77,11 +77,11 @@ namespace Minesweeper.ReinforcementLearningSolver
         }
 
         static void WriteLog(
-            BoardConfig boardConfig, 
-            LearningParam learningParam, 
-            Stopwatch learnStopwatch, 
-            int solveTrialCount, 
-            int solvedCountUnusedLearningData, 
+            BoardConfig boardConfig,
+            LearningParam learningParam,
+            Stopwatch learnStopwatch,
+            int solveTrialCount,
+            int solvedCountUnusedLearningData,
             int solvedCountUseLearningData)
         {
             logger.Info("| 要素 | 値");
