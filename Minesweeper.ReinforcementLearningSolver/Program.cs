@@ -140,9 +140,9 @@ namespace Minesweeper.ReinforcementLearningSolver
                 logger.Error(e);
             }
 
-            if(learningParam.SaveValueFile)
+            if(learningParam.SaveEevaluationValueFile)
             {
-                leaner.EvaluationValue.SaveToCsvFile(learningParam.ValueCsvPath);
+                leaner.EvaluationValue.SaveToCsvFile(learningParam.EevaluationValueCsvPath);
             }
             return leaner.EvaluationValue;
         }

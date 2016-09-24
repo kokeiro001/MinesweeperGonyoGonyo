@@ -21,8 +21,8 @@ namespace Minesweeper.ReinforcementLearningSolver
         public int BoardRandomSeed => 0;
         public int ComRandomSeed => 0;
 
-        public bool LoadValueFile => false;
-        public bool SaveValueFile => false;
+        public bool LoadEevaluationValueFile => false;
+        public bool SaveEevaluationValueFile => false;
 
         public readonly BoardConfig BoardConfig;
         public readonly int LearnCount;
@@ -33,7 +33,7 @@ namespace Minesweeper.ReinforcementLearningSolver
         public readonly float RewardDead;
 
         public readonly string LogPath;
-        public readonly string ValueCsvPath;
+        public readonly string EevaluationValueCsvPath;
 
         public LearningParam(
             BoardConfig baordConfig, 
@@ -50,9 +50,10 @@ namespace Minesweeper.ReinforcementLearningSolver
             RewardOpenMultiCell = rewardOpenMultiCell;
             RewardDead = rewardDead;
 
-            string baseFilePath = $"LearningResults/{baordConfig.BoardHeight}x{baordConfig.BoardWidth}_b{baordConfig.BombCount}_{LearnCount}_e{epsilon * 100}_{DateTime.Now.ToString(@"yyyy_MMdd_HHmmss")}";
+            string reward = $"o{RewardOpenOneCell * 100}_m{RewardOpenMultiCell * 100}_d{RewardDead * -100}";
+            string baseFilePath = $"LearningResults/{baordConfig.BoardHeight}x{baordConfig.BoardWidth}_b{baordConfig.BombCount}_{LearnCount}_e{epsilon * 100}_{DateTime.Now.ToString(@"yyyy_MMdd_HHmmss")}_{reward}";
             LogPath =  $"{baseFilePath}.log";
-            ValueCsvPath = $"{baseFilePath}.csv";
+            EevaluationValueCsvPath = $"{baseFilePath}.csv";
         }
     }
 

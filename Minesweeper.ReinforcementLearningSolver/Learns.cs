@@ -23,8 +23,8 @@ namespace Minesweeper.ReinforcementLearningSolver
         public MinesweeperLearner(LearningParam learningParam)
         {
             this.learningParam = learningParam;
-            EvaluationValue = learningParam.LoadValueFile ?
-                    EvaluationValue.LoadFromCsvFile(learningParam.ValueCsvPath) :
+            EvaluationValue = learningParam.LoadEevaluationValueFile ?
+                    EvaluationValue.LoadFromCsvFile(learningParam.EevaluationValueCsvPath) :
                     new EvaluationValue();
 
             com = new MinesweeperCom(EvaluationValue, learningParam.ComRandomSeed, learningParam.Epsilon);
