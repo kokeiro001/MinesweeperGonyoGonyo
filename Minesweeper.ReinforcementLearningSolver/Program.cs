@@ -149,6 +149,7 @@ namespace Minesweeper.ReinforcementLearningSolver
 
             try
             {
+                learningProgress = 0;
                 for(int i = 0; i < learningParam.LearnCount; i++)
                 {
                     leaner.Learn();
