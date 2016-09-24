@@ -321,6 +321,15 @@ namespace Minesweeper.Common
             return userControllResult;
         }
 
+        public GameCommand[] ValidCommands()
+        {
+            // HACK: 毎回ゴミ生成しちゃうんで、適当なUpdateとかで配列に持たせたりなんだりする
+            return Board
+                    .Where(c => c.State == CellState.Close)
+                    .Select(c => new GameCommand(c.BoardIndex / Width, c.BoardIndex % Width, GameCommandType.Open))
+                    .ToArray();
+        }
+
         public void Dead()
         {
             IsDead = true;

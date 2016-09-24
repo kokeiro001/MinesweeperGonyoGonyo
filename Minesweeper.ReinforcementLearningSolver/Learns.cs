@@ -29,7 +29,7 @@ namespace Minesweeper.ReinforcementLearningSolver
 
             while(true)
             {
-                var currentAction = com.SelectCommand(game.Board);
+                var currentAction = com.SelectCommand(game);
 
                 game.Board.MakeHash(boardHashBuf);
                 int idx = currentAction.Y * game.Board.Width + currentAction.X;
@@ -184,15 +184,15 @@ namespace Minesweeper.ReinforcementLearningSolver
             this.epsilon = epsilon;
         }
 
-        public GameCommand SelectCommand(MinesweeperBoard state)
+        public GameCommand SelectCommand(MinesweeperGame game)
         {
-            var maxCommand = value.GetMaxCommand(state);
+            var maxCommand = value.GetMaxCommand(game.Board);
             var selectedCommand = maxCommand;
 
             // 挙動方策（ε-グリーディ）で行動を決定
             if(selectedCommand == null || (learning && random.NextDouble() < epsilon))
             {
-                var validCommands = state.ValidCommands();
+                var validCommands = game.ValidCommands();
                 int randomIndex = random.Next(validCommands.Length);
                 selectedCommand = validCommands[randomIndex];
             }

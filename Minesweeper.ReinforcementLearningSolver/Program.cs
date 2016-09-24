@@ -208,7 +208,7 @@ namespace Minesweeper.ReinforcementLearningSolver
 
                 while(true)
                 {
-                    var currentAction = com.SelectCommand(game.Board);
+                    var currentAction = com.SelectCommand(game);
 
                     game.Board.MakeHash(boardHashBuf);
                     int idx = currentAction.Y * solveParam.BoardConfig.BoardWidth + currentAction.X;
@@ -231,14 +231,7 @@ namespace Minesweeper.ReinforcementLearningSolver
 
     static class MinesweeperExtensions
     {
-        // HACK: 拡張元におとなしくもたせる
-        public static GameCommand[] ValidCommands(this MinesweeperBoard board)
-        {
-            return board
-                    .Where(c => c.State == CellState.Close)
-                    .Select(c => new GameCommand(c.BoardIndex / board.Width, c.BoardIndex % board.Width, GameCommandType.Open))
-                    .ToArray();
-        }
+
 
         public static void ShowBoardUser(this MinesweeperGame game)
         {
