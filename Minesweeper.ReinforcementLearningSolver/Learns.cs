@@ -1,56 +1,79 @@
-﻿using Minesweeper.Common;
+﻿//#define LOG_LEARN_PROGRESS
+using Minesweeper.Common;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using SQLite;
+using log4net;
+using System.Diagnostics;
 
 namespace Minesweeper.ReinforcementLearningSolver
 {
     class MinesweeperLearner
     {
-        public ulong[] boardHashBuf = new ulong[2];
-        EvaluationValue evalutionValue;
+        static private ILog logger = LogManager.GetLogger("MainLog");
+
+        public EvaluationValue EvaluationValue { get; }
+
+        ulong[] boardHashBuf = new ulong[2];
         MinesweeperCom com;
         MinesweeperGame game;
         LearningParam learningParam;
 
-        public MinesweeperLearner(MinesweeperGame game, MinesweeperCom com, EvaluationValue evalutionValue, LearningParam learningParam)
+        public MinesweeperLearner(LearningParam learningParam)
         {
-            this.evalutionValue = evalutionValue;
-            this.game = game;
-            this.com = com;
             this.learningParam = learningParam;
+            EvaluationValue = learningParam.LoadValueFile ?
+                    EvaluationValue.LoadFromCsvFile(learningParam.ValueCsvPath) :
+                    new EvaluationValue();
+
+            com = new MinesweeperCom(EvaluationValue, true, learningParam.ComRandomSeed, learningParam.Epsilon);
+            game = new MinesweeperGame(
+                learningParam.BoardConfig.BoardWidth,
+                learningParam.BoardConfig.BoardHeight,
+                learningParam.BoardConfig.BombCount,
+                learningParam.BoardRandomSeed);
+
         }
 
-        public bool Learn()
+        public void Learn()
         {
-            game.ClearBoard();
-            game.GenerateRandomBoard();
+            learningProgress = 0;
+            for(int i = 0; i < learningParam.LearnCount; i++)
+            {
+                game.ClearBoard();
+                game.GenerateRandomBoard();
+                LearnOneStep();
+                LearningProgressView(i, learningParam.LearnCount);
+            }
+        }
 
+        private bool LearnOneStep()
+        {
             while(true)
             {
                 var currentAction = com.SelectCommand(game);
 
                 game.Board.MakeHash(boardHashBuf);
-                int idx = currentAction.Y * game.Board.Width + currentAction.X;
-                var result = game.OpenCell(idx);
+                int cellIndex = currentAction.Y * game.Board.Width + currentAction.X;
+                var result = game.OpenCell(cellIndex);
 
                 if(result.IsClear)
                 {
                     // 状態が変わったセルの数に応じて、報酬を与える
                     if(result.StateChangedCells.Count == 1)
                     {
-                        evalutionValue.Update(boardHashBuf, currentAction, learningParam.RewardOpenOneCell);
+                        EvaluationValue.Update(boardHashBuf, currentAction, learningParam.RewardOpenOneCell);
                     }
                     else
                     {
-                        evalutionValue.Update(boardHashBuf, currentAction, learningParam.RewardOpenMultiCell);
+                        EvaluationValue.Update(boardHashBuf, currentAction, learningParam.RewardOpenMultiCell);
                     }
                     return true;
                 }
                 else if(result.IsDead)
                 {
-                    evalutionValue.Update(boardHashBuf, currentAction, learningParam.RewardDead);
+                    EvaluationValue.Update(boardHashBuf, currentAction, learningParam.RewardDead);
                     return false;
                 }
                 else
@@ -58,15 +81,28 @@ namespace Minesweeper.ReinforcementLearningSolver
                     // 状態が変わったセルの数に応じて、報酬を与える
                     if(result.StateChangedCells.Count == 1)
                     {
-                        evalutionValue.Update(boardHashBuf, currentAction, learningParam.RewardOpenOneCell);
+                        EvaluationValue.Update(boardHashBuf, currentAction, learningParam.RewardOpenOneCell);
                     }
                     else
                     {
-                        evalutionValue.Update(boardHashBuf, currentAction, learningParam.RewardOpenMultiCell);
+                        EvaluationValue.Update(boardHashBuf, currentAction, learningParam.RewardOpenMultiCell);
                     }
                 }
             }
         }
+
+        int learningProgress = 0;
+        [Conditional("LOG_LEARN_PROGRESS")]
+        private void LearningProgressView(int currentLeanCount, int learnCount)
+        {
+            float per = ((float)currentLeanCount / learnCount) * 100f;
+            if(per >= learningProgress)
+            {
+                learningProgress += 1;
+                logger.Debug($"Progress={learningProgress}%, LearnCount={currentLeanCount}");
+            }
+        }
+
     }
 
     class EvaluationValue

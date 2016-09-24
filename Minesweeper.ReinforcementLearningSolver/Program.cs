@@ -127,49 +127,23 @@ namespace Minesweeper.ReinforcementLearningSolver
 
         static EvaluationValue Learn(LearningParam learningParam)
         {
-            EvaluationValue evalutionValue = learningParam.LoadValueFile ?
-                    EvaluationValue.LoadFromCsvFile(learningParam.ValueCsvPath) :
-                    new EvaluationValue();
 
-            MinesweeperCom com = new MinesweeperCom(evalutionValue, true, learningParam.ComRandomSeed, learningParam.Epsilon);
-            MinesweeperGame game = new MinesweeperGame(
-                learningParam.BoardConfig.BoardWidth, 
-                learningParam.BoardConfig.BoardHeight, 
-                learningParam.BoardConfig.BombCount, 
-                learningParam.BoardRandomSeed);
-            MinesweeperLearner leaner = new MinesweeperLearner(game, com, evalutionValue, learningParam);
-
+            MinesweeperLearner leaner = new MinesweeperLearner(learningParam);
             try
             {
-                learningProgress = 0;
-                for(int i = 0; i < learningParam.LearnCount; i++)
-                {
-                    leaner.Learn();
-                    LearningProgressView(i, learningParam.LearnCount);
-                }
+                leaner.Learn();
             }
             catch(Exception e)
             {
-                logger.Error("メモリなくなったんじゃないかな(´・ω・`)", e);
+                logger.Error(e);
             }
 
-            // save
+            // save csv
             if(learningParam.SaveValueFile)
             {
-                evalutionValue.SaveToCsvFile(learningParam.ValueCsvPath);
+                leaner.EvaluationValue.SaveToCsvFile(learningParam.ValueCsvPath);
             }
-            return evalutionValue;
-        }
-
-        static int learningProgress = 0;
-        static void LearningProgressView(int currentLeanCount, int learnCount)
-        {
-            float per = ((float)currentLeanCount / learnCount) * 100f;
-            if(per >= learningProgress)
-            {
-                learningProgress += 1;
-                logger.Debug($"Progress={learningProgress}%, LearnCount={currentLeanCount}");
-            }
+            return leaner.EvaluationValue;
         }
 
 
