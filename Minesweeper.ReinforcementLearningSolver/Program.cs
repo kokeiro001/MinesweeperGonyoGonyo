@@ -11,8 +11,8 @@ namespace Minesweeper.ReinforcementLearningSolver
 {
     class Program
     {
-        static private ILog logger = LogManager.GetLogger("MainLog");
-        private static SQLiteConnection learningResultDB;
+        static ILog logger = LogManager.GetLogger("MainLog");
+        static SQLiteConnection learningResultDB;
 
         static void Main(string[] args)
         {
@@ -76,7 +76,7 @@ namespace Minesweeper.ReinforcementLearningSolver
             logger.Info($"GC.CollectionCount(2)|{GC.CollectionCount(2).ToString()}|");
         }
 
-        private static void WriteLog(
+        static void WriteLog(
             BoardConfig boardConfig, 
             LearningParam learningParam, 
             Stopwatch learnStopwatch, 

@@ -33,7 +33,6 @@ namespace Minesweeper.ReinforcementLearningSolver
                 learningParam.BoardConfig.BoardHeight,
                 learningParam.BoardConfig.BombCount,
                 learningParam.BoardRandomSeed);
-
         }
 
         public void Learn()
@@ -48,7 +47,7 @@ namespace Minesweeper.ReinforcementLearningSolver
             }
         }
 
-        private bool LearnOneStep()
+        bool LearnOneStep()
         {
             while(true)
             {
@@ -93,7 +92,7 @@ namespace Minesweeper.ReinforcementLearningSolver
 
         int learningProgress = 0;
         [Conditional("LOG_LEARN_PROGRESS")]
-        private void LearningProgressView(int currentLeanCount, int learnCount)
+        void LearningProgressView(int currentLeanCount, int learnCount)
         {
             float per = ((float)currentLeanCount / learnCount) * 100f;
             if(per >= learningProgress)

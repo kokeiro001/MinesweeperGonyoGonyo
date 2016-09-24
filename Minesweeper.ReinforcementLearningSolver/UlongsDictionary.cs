@@ -5,7 +5,7 @@ namespace Minesweeper.ReinforcementLearningSolver
 {
     class UlongsDictionary<T>
     {
-        private readonly int ArraySize = 2;
+        readonly int ArraySize = 2;
 
         Dictionary<ulong, Dictionary<ulong, T>> dictionary = new Dictionary<ulong, Dictionary<ulong, T>>();
 
