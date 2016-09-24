@@ -12,17 +12,16 @@ namespace Minesweeper.ReinforcementLearningSolver
     class Program
     {
         static private ILog logger = LogManager.GetLogger("MainLog");
-        private static SQLiteConnection db;
+        private static SQLiteConnection learningResultDB;
 
         static void Main(string[] args)
         {
-            db = new SQLiteConnection("learnResults.sqlite3");
-            db.CreateTable<LearningResult>();
+            learningResultDB = new SQLiteConnection("learnResults.sqlite3");
+            learningResultDB.CreateTable<LearningResult>();
 
             const int SolveTrialCount = 100000;
 
             var learnCounts = new int[] { /*1000,*/ 10000, /*100000,*/ };
-            var learnSteps = new float[] { 0.01f, 0.05f, 0.1f, 0.15f, 0.2f };
             var epsilons = new float[] { 0.01f, 0.05f, 0.1f, 0.15f, 0.2f };
             var widths = new int[] { 3, 4, 5 };
             var heights = new int[] { 3, 4, 5 };
@@ -36,14 +35,12 @@ namespace Minesweeper.ReinforcementLearningSolver
                       from bomb in bombCounts
                       let boardConfig = new BoardConfig(w, h, bomb)
                       from learnCount in learnCounts
-                      from step in learnSteps
                       from epsilon in epsilons
                       from rewardOneCell in rewardOneCells
                       from rewardMultiCell in rewardMultiCells
                       from rewardDead in rewardDeads
                       select new LearningParam(boardConfig,
                                                learnCount,
-                                               step,
                                                epsilon,
                                                rewardOneCell,
                                                rewardMultiCell,
@@ -92,7 +89,6 @@ namespace Minesweeper.ReinforcementLearningSolver
             logger.Info($"ボードサイズ|{boardConfig.BoardWidth}x{boardConfig.BoardHeight}|");
             logger.Info($"爆弾の数|{boardConfig.BombCount}|");
             logger.Info($"学習回数|{learningParam.LearnCount}|");
-            logger.Info($"LearnStep|{learningParam.LearnStepSize}|");
             logger.Info($"Epsilion|{learningParam.Epsilon}|");
             logger.Info($"学習にかかった時間|{learnStopwatch.Elapsed.ToString()}|");
 
@@ -102,7 +98,7 @@ namespace Minesweeper.ReinforcementLearningSolver
             logger.Info($"学習有りクリア回数|{solvedCountUseLearningData}|");
             logger.Info($"学習有りクリア率|{solvedCountUseLearningData / (double)solveTrialCount}|");
 
-            var table = db.Table<LearningResult>();
+            var table = learningResultDB.Table<LearningResult>();
             var learningResult = new LearningResult()
             {
                 AlgorithmVersion = "hoge",
@@ -116,7 +112,6 @@ namespace Minesweeper.ReinforcementLearningSolver
                 // Learn
                 LearnCount = learningParam.LearnCount,
                 LearnSeconds = (uint)learnStopwatch.Elapsed.TotalSeconds,
-                LearnStepSize = learningParam.LearnStepSize,
                 LearnEpsilion = learningParam.Epsilon,
                 RewardOpenOneCell = learningParam.RewardOpenOneCell,
                 RewardOpenMultiCell = learningParam.RewardOpenMultiCell,
@@ -127,12 +122,12 @@ namespace Minesweeper.ReinforcementLearningSolver
                 SolvedCountUseLearningData = solvedCountUseLearningData,
                 SolvedCountUnuseLearningData = solvedCountUnusedLearningData
             };
-            db.Insert(learningResult);
+            learningResultDB.Insert(learningResult);
         }
 
         static EvaluationValue Learn(LearningParam learningParam)
         {
-            EvaluationValue value = new EvaluationValue(learningParam.LearnStepSize);
+            EvaluationValue value = new EvaluationValue();
 
             if(learningParam.LoadValueFile)
             {
@@ -185,7 +180,7 @@ namespace Minesweeper.ReinforcementLearningSolver
         {
             if(value == null)
             {
-                value = new EvaluationValue(0);
+                value = new EvaluationValue();
                 if(solveParam.LoadValueFile)
                 {
                     value.LoadFromCsvFile(solveParam.ValueCsvPath);
@@ -231,8 +226,6 @@ namespace Minesweeper.ReinforcementLearningSolver
 
     static class MinesweeperExtensions
     {
-
-
         public static void ShowBoardUser(this MinesweeperGame game)
         {
             StringBuilder sb = new StringBuilder();

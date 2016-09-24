@@ -71,14 +71,12 @@ namespace Minesweeper.ReinforcementLearningSolver
 
     class EvaluationValue
     {
-        float stepSize;
         ulong[] boardHashBuf = new ulong[2];
 
         UlongsDictionary<Dictionary<GameCommand, double>> valueDic = new UlongsDictionary<Dictionary<GameCommand, double>>();
 
-        public EvaluationValue(float stepSize)
+        public EvaluationValue()
         {
-            this.stepSize = stepSize;
         }
 
         public GameCommand GetMaxCommand(MinesweeperBoard board)
@@ -117,7 +115,7 @@ namespace Minesweeper.ReinforcementLearningSolver
             {
                 valueDic.Get(boardHashBuf).Add(command, 0);
             }
-            valueDic.Get(boardHashBuf)[command] += stepSize * (reward - valueDic.Get(boardHashBuf)[command]);
+            valueDic.Get(boardHashBuf)[command] += (reward - valueDic.Get(boardHashBuf)[command]);
         }
 
         public void SaveToCsvFile(string filePath)
@@ -217,7 +215,6 @@ namespace Minesweeper.ReinforcementLearningSolver
         // Learn
         public int LearnCount { get; set; }
         public uint LearnSeconds { get; set; }
-        public float LearnStepSize { get; set; }
         public float LearnEpsilion { get; set; }
         public float RewardOpenOneCell { get; set; }
         public float RewardOpenMultiCell { get; set; }
