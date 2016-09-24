@@ -57,13 +57,14 @@ namespace Minesweeper.ReinforcementLearningSolver
                 var value = Learn(learningParam);
                 learnStopwatch.Stop();
 
-                // 学習結果を用いないで
-                SolveParam solveParamUnuseLearningData = new SolveParam(learningParam.BoardConfig, SolveTrialCount, "", 0);
+                // 学習結果を用いないで指定回数解いてみる。
+                // すべての手をランダムに選択する。
+                SolveParam solveParamUnuseLearningData = new SolveParam(learningParam.BoardConfig, new EvaluationValue(), SolveTrialCount);
                 int solvedCountUnuseLearningData = Solve(solveParamUnuseLearningData);
 
-                // 学習結果を用いて
-                SolveParam solveParamUseLearningData = new SolveParam(learningParam.BoardConfig, SolveTrialCount, "", learningParam.Epsilon);
-                int solvedCountUseLearningData = Solve(solveParamUseLearningData, value);
+                // 学習結果を用いて指定回数解いてみる。
+                SolveParam solveParamUseLearningData = new SolveParam(learningParam.BoardConfig, value, SolveTrialCount);
+                int solvedCountUseLearningData = Solve(solveParamUseLearningData);
 
                 WriteLog(learningParam.BoardConfig, learningParam, learnStopwatch, SolveTrialCount, solvedCountUnuseLearningData, solvedCountUseLearningData);
 
@@ -175,18 +176,9 @@ namespace Minesweeper.ReinforcementLearningSolver
         }
 
 
-        static int Solve(SolveParam solveParam, EvaluationValue value = null)
+        static int Solve(SolveParam solveParam)
         {
-            if(value == null)
-            {
-                value = new EvaluationValue();
-                if(solveParam.LoadValueFile)
-                {
-                    value.LoadFromCsvFile(solveParam.ValueCsvPath);
-                }
-            }
-
-            MinesweeperCom com = new MinesweeperCom(value, false, solveParam.ComRandomSeed, solveParam.Epsilon);
+            MinesweeperCom com = new MinesweeperCom(solveParam.Value, false, solveParam.ComRandomSeed, 0);
             MinesweeperGame game = new MinesweeperGame(
                 solveParam.BoardConfig.BoardWidth, 
                 solveParam.BoardConfig.BoardHeight,

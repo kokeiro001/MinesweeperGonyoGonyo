@@ -68,26 +68,15 @@ namespace Minesweeper.ReinforcementLearningSolver
         public int ComRandomSeed => 1901;
 
         public readonly int SolveTrialCount;
-        public readonly string ValueCsvPath;
 
         public readonly BoardConfig BoardConfig;
-        public readonly bool LoadValueFile;
-        public readonly float Epsilon;
+        public readonly EvaluationValue Value;
 
-        public SolveParam(BoardConfig boardConfig, int solveTrialCount, string valueCsvPath, float epsilion)
+        public SolveParam(BoardConfig boardConfig, EvaluationValue value, int solveTrialCount)
         {
             BoardConfig = boardConfig;
+            Value = value;
             SolveTrialCount = solveTrialCount;
-            Epsilon = epsilion;
-            if(string.IsNullOrEmpty(valueCsvPath))
-            {
-                LoadValueFile = false;
-            }
-            else
-            {
-                LoadValueFile = true;
-                ValueCsvPath = valueCsvPath;
-            }
         }
     }
 }
